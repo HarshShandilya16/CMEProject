@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+psycopg2-binary
+python-dotenv
+requests
+apscheduler
+sqlalchemy-timescaledb
+playwright
+pytz
+yfinance
+google-generativeai
+
+

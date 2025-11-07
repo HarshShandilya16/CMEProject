@@ -1,0 +1,58 @@
+# backend/services/ingestion.py
+from sqlalchemy.orm import Session
+from database import SessionLocal
+from services.data_provider import DataProvider
+from services.data_parser import parse_option_chain_data
+from models import StockData, OptionData
+import logging
+
+# Setup basic logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+provider = DataProvider()
+
+
+def fetch_and_store(symbol: str):
+    db: Session = SessionLocal()
+    try:
+        logging.info(f"Fetching data for {symbol}...")
+        raw_data = provider.get_option_chain(symbol)
+        
+        if not raw_data or raw_data.get('error'):
+            logging.warning(f"No data received for {symbol}.")
+            return
+        
+        logging.info(f"Parsing data for {symbol}...")
+        stock_data, options_list = parse_option_chain_data(symbol, raw_data)
+        
+        if not stock_data or not options_list:
+            logging.warning(f"Data parsing failed for {symbol}.")
+            return
+        
+        logging.info(f"Storing {len(options_list)} option records for {symbol}...")
+        
+        # --- THIS IS THE NEW, SMARTER LOGIC ---
+        existing_stock = db.query(StockData).filter(StockData.symbol == stock_data.symbol).first()
+        if existing_stock:
+            logging.info(f"Updating existing stock data for {symbol}.")
+            existing_stock.underlying_value = stock_data.underlying_value
+            existing_stock.timestamp = stock_data.timestamp
+        else:
+            logging.info(f"Creating new stock data entry for {symbol}.")
+            db.add(stock_data)
+        # --- END OF NEW LOGIC ---
+        
+        # This part is still correct: delete all old options, add all new ones
+        db.query(OptionData).filter(OptionData.symbol == symbol).delete(synchronize_session=False)
+        
+        # Add all new fresh data
+        db.add_all(options_list)
+        
+        db.commit()
+        logging.info(f"Successfully stored data for {symbol}.")
+    except Exception as e:
+        logging.error(f"Ingestion failed for {symbol}: {e}")
+        db.rollback()
+    finally:
+        db.close()
+
