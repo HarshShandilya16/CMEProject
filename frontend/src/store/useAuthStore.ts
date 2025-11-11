@@ -5,6 +5,8 @@ export interface AuthUser {
   _id: string;
   name: string;
   email: string;
+  photo?: string;
+  googleUser?: boolean;
 }
 
 interface AuthState {
@@ -15,8 +17,8 @@ interface AuthState {
 }
 
 export const useAuthStore = create<AuthState>()(
-  persist(
-    (set: (partial: Partial<AuthState> | ((state: AuthState) => Partial<AuthState>)) => void) => ({
+  persist<AuthState>(
+    (set) => ({
       token: null,
       user: null,
       setAuth: (token: string, user: AuthUser) => set({ token, user }),

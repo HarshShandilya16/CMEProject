@@ -29,3 +29,10 @@ export async function fetchMe() {
   });
   return res.data.user;
 }
+
+export async function googleLogin(idToken: string) {
+  const res = await axios.post(`${AUTH_API}/api/auth/google`, { idToken });
+  const { token, user } = res.data;
+  useAuthStore.getState().setAuth(token, user);
+  return user;
+}

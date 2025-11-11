@@ -4,12 +4,14 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './src/routes/auth.js';
 import userRoutes from './src/routes/user.js';
+import googleRoutes from './src/routes/google.js';
+import { initFirebaseAdmin } from './src/firebaseAdmin.js';
 
 dotenv.config();
 
 const app = express();
 
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 
 const origins = (process.env.CORS_ORIGINS || 'http://localhost:5173,http://localhost:3000')
   .split(',')
@@ -35,9 +37,18 @@ mongoose
     process.exit(1);
   });
 
+// Initialize Firebase Admin (will throw if creds missing)
+try {
+  initFirebaseAdmin();
+  console.log('Firebase Admin initialized');
+} catch (e) {
+  console.warn('Firebase Admin not initialized:', e.message);
+}
+
 app.get('/health', (_req, res) => res.json({ ok: true }));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/auth/google', googleRoutes);
 
 app.listen(PORT, () => console.log(`Auth server listening on ${PORT}`));
