@@ -3,10 +3,14 @@ import React from 'react';
 import { FiSun, FiMoon, FiBell, FiSettings } from 'react-icons/fi';
 import { useAppStore } from '../../store/useAppStore';
 import { SymbolSelector } from '../SymbolSelector';
+import { useAuthStore } from '../../store/useAuthStore';
+import { logout } from '../../services/authService';
 
 export const Navbar: React.FC = () => {
   const theme = useAppStore((state) => state.theme);
   const toggleTheme = useAppStore((state) => state.toggleTheme);
+  const setActiveView = useAppStore((state) => state.setActiveView);
+  const { user } = useAuthStore();
 
   return (
     <nav
@@ -39,6 +43,60 @@ export const Navbar: React.FC = () => {
           </span>
 
           <div className="flex items-center gap-3">
+            {/* Home */}
+            <button
+              onClick={() => setActiveView('home')}
+              className={`px-3 py-1 rounded text-sm ${
+                theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+              }`}
+            >
+              Home
+            </button>
+
+            {/* Auth actions */}
+            {user ? (
+              <>
+                <button
+                  onClick={() => setActiveView('profile')}
+                  className={`px-3 py-1 rounded text-sm ${
+                    theme === 'dark' ? 'bg-indigo-700 hover:bg-indigo-600 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                  }`}
+                >
+                  {user.name.split(' ')[0]}
+                </button>
+                <button
+                  onClick={() => {
+                    logout();
+                    setActiveView('home');
+                  }}
+                  className={`px-3 py-1 rounded text-sm ${
+                    theme === 'dark' ? 'bg-red-700 hover:bg-red-600 text-white' : 'bg-red-600 hover:bg-red-700 text-white'
+                  }`}
+                >
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => setActiveView('signin')}
+                  className={`px-3 py-1 rounded text-sm ${
+                    theme === 'dark' ? 'bg-blue-700 hover:bg-blue-600 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'
+                  }`}
+                >
+                  Sign In
+                </button>
+                <button
+                  onClick={() => setActiveView('signup')}
+                  className={`px-3 py-1 rounded text-sm ${
+                    theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+                  }`}
+                >
+                  Sign Up
+                </button>
+              </>
+            )}
+
             <button
               className={`p-2 rounded-lg transition-colors ${
                 theme === 'dark'

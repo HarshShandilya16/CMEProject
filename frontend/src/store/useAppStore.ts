@@ -4,7 +4,7 @@ import { persist } from 'zustand/middleware';
 import type { PortfolioLeg } from '../data/types';
 
 type Theme = 'light' | 'dark';
-type ActiveView = 'dashboard' | 'optionchain' | 'analytics' | 'portfolio';
+type ActiveView = 'home' | 'dashboard' | 'optionchain' | 'analytics' | 'portfolio' | 'signin' | 'signup' | 'profile';
 
 interface AppState {
   currentSymbol: string;

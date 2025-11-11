@@ -6,6 +6,10 @@ import { Dashboard } from './pages/Dashboard';
 import { Portfolio } from './pages/Portfolio';
 import { OptionChainTable } from './components/OptionChainTable';
 import { useAppStore } from './store/useAppStore';
+import { Home } from './pages/Home';
+import { SignIn } from './pages/SignIn';
+import { SignUp } from './pages/SignUp';
+import { Profile } from './pages/Profile';
 
 function App() {
   const activeView = useAppStore((state) => state.activeView);
@@ -41,6 +45,7 @@ function App() {
           } overflow-y-auto transition-colors`}
         >
           {/* Content based on active view */}
+          {activeView === 'home' && <Home />}
           {activeView === 'dashboard' && <Dashboard />}
           {activeView === 'optionchain' && <OptionChainTable />}
           {activeView === 'analytics' && (
@@ -62,6 +67,9 @@ function App() {
             </div>
           )}
           {activeView === 'portfolio' && <Portfolio />}
+          {activeView === 'signin' && <SignIn />}
+          {activeView === 'signup' && <SignUp />}
+          {activeView === 'profile' && <Profile />}
         </main>
       </div>
     </div>
