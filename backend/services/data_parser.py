@@ -64,6 +64,7 @@ def parse_option_chain_data(symbol: str, raw_data: dict) -> tuple:
                 if 'CE' in entry:
                     ce = entry['CE']
                     options_list.append(OptionData(
+                        oi_change=safe_int(ce.get('changeinOpenInterest')),
                         symbol=symbol.upper(),
                         expiry_date=expiry_date,
                         strike_price=strike,
@@ -82,6 +83,7 @@ def parse_option_chain_data(symbol: str, raw_data: dict) -> tuple:
                 if 'PE' in entry:
                     pe = entry['PE']
                     options_list.append(OptionData(
+                        oi_change=safe_int(pe.get('changeinOpenInterest')),
                         symbol=symbol.upper(),
                         expiry_date=expiry_date,
                         strike_price=strike,

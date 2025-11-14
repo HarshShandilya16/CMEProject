@@ -2,11 +2,11 @@
 import { useEffect } from 'react';
 import { Navbar } from './components/layout/Navbar';
 import { Sidebar } from './components/layout/Sidebar';
-import { Dashboard } from './pages/Dashboard';
+import Dashboard from './pages/Dashboard.tsx';
 import { Portfolio } from './pages/Portfolio';
 import { OptionChainTable } from './components/OptionChainTable';
 import { useAppStore } from './store/useAppStore';
-import { Home } from './pages/Home';
+import  Home  from './pages/Home';
 import { SignIn } from './pages/SignIn';
 import { SignUp } from './pages/SignUp';
 import { Profile } from './pages/Profile';

@@ -10,5 +10,6 @@ playwright
 pytz
 yfinance
 google-generativeai
+numpy
 
 

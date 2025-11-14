@@ -5,13 +5,16 @@ from database import Base
 
 class OptionData(Base):
     __tablename__ = 'option_data'
-    
-    # REMOVED the 'id' column
+
+    # This is the new column we are adding
+    oi_change = Column(Integer, default=0)
+
+    # --- All your existing columns ---
     timestamp = Column(DateTime(timezone=True), nullable=False)
     symbol = Column(String, index=True)
     expiry_date = Column(Date)
     strike_price = Column(Float)
-    option_type = Column(String(2))  # 'CE' or 'PE'
+    option_type = Column(String(2)) # 'CE' or 'PE'
     last_price = Column(Float)
     iv = Column(Float, default=0.0)
     oi = Column(Integer, default=0)
@@ -20,8 +23,8 @@ class OptionData(Base):
     gamma = Column(Float, default=0.0)
     theta = Column(Float, default=0.0)
     vega = Column(Float, default=0.0)
-    
-    # ADD THIS: A composite primary key that includes timestamp
+
+    # This is our existing primary key
     __table_args__ = (
         PrimaryKeyConstraint('timestamp', 'symbol', 'strike_price', 'option_type', 'expiry_date'),
     )
@@ -29,9 +32,7 @@ class OptionData(Base):
 
 class StockData(Base):
     __tablename__ = 'stock_data'
-    
     id = Column(Integer, primary_key=True, index=True)
     timestamp = Column(DateTime(timezone=True), server_default=func.now())
     symbol = Column(String, unique=True, index=True)
     underlying_value = Column(Float)
-

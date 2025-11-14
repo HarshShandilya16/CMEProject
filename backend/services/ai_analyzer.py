@@ -2,16 +2,13 @@
 import logging
 import os
 import google.generativeai as genai
-from sqlalchemy.orm import Session
-from sqlalchemy import func  # Import func
-from models import OptionData
+
 
 # Configure the Gemini API
 try:
-    # Make sure you've added GEMINI_API_KEY to your .env file
     GOOGLE_API_KEY = os.getenv('GEMINI_API_KEY')
     if not GOOGLE_API_KEY:
-        raise ValueError("GEMINI_API_KEY not found in .env file. Please add it.")
+        raise ValueError("GEMINI_API_KEY not found in .env file.")
     
     genai.configure(api_key=GOOGLE_API_KEY)
     model = genai.GenerativeModel('gemini-1.5-flash')
@@ -21,69 +18,84 @@ except Exception as e:
     model = None
 
 
-def calculate_pcr(db: Session, symbol: str) -> float:
-    """Calculates the Put-Call Ratio (PCR) based on Open Interest."""
-    try:
-        # Query to get total Put OI
-        total_puts_oi = db.query(func.sum(OptionData.oi)).filter(
-            OptionData.symbol == symbol,
-            OptionData.option_type == 'PE'
-        ).scalar() or 0
-        
-        # Query to get total Call OI
-        total_calls_oi = db.query(func.sum(OptionData.oi)).filter(
-            OptionData.symbol == symbol,
-            OptionData.option_type == 'CE'
-        ).scalar() or 0
-
-        if total_calls_oi == 0:
-            return 0.0
-            
-        pcr = total_puts_oi / total_calls_oi
-        return round(pcr, 2)
-    except Exception as e:
-        logging.error(f"Error calculating PCR: {e}")
-        return 0.0
-
-
-def get_market_sentiment_insight(symbol: str, pcr: float) -> str:
-    """Gets a human-readable insight from the Gemini API."""
+def get_market_sentiment_insight(symbol: str, pcr: float, max_oi_call: float, max_oi_put: float) -> str:
+    """
+    Gets a detailed, human-readable insight from the Gemini API
+    based on multiple data points.
+    """
     
+    # --- This is our new, much smarter prompt ---
     prompt = f"""
-    You are a concise Indian stock market analyst.
-    The current symbol is {symbol}.
-    The current Put-Call Ratio (based on Open Interest) is {pcr}.
+    You are a senior options analyst for an Indian retail trading platform.
+    Your goal is to provide a concise, 2-sentence insight based on the data provided.
+    Be clear and confident. Do not use markdown.
 
-    Based *only* on this PCR value, provide a one-sentence market sentiment insight.
-    - A PCR > 1.0 indicates a bearish sentiment (more puts).
-    - A PCR < 0.7 indicates a bullish sentiment (more calls).
-    - A PCR between 0.7 and 1.0 is considered neutral.
 
-    Example: "Bearish sentiment detected, as put open interest is significantly higher than call open interest."
-    Example: "Bullish sentiment detected, with call open interest dominating puts."
-    Example: "Market sentiment appears neutral, with a balanced Put-Call Ratio."
-    
-    Return only the single sentence of analysis.
+
+    Data:
+
+    - Symbol: {symbol}
+
+    - Put-Call Ratio (OI): {pcr}
+
+    - Max OI Call Strike (Strong Resistance): {max_oi_call}
+
+    - Max OI Put Strike (Strong Support): {max_oi_put}
+
+
+
+    Analysis Rules:
+
+    1.  Analyze the PCR: > 1.0 is bearish, < 0.7 is bullish, 0.7-1.0 is neutral.
+
+    2.  Analyze the OI levels: The market is expected to trade *between* the support (Max Put) and resistance (Max Call) levels.
+
+    3.  Synthesize both into a 2-sentence insight.
+
+
+
+    Example 1:
+
+    Data: PCR=0.7, Max Call=25000, Max Put=24500
+
+    Insight: Overall sentiment appears bullish, with call writers dominating. The key range to watch is between the 24,500 support level and the 25,000 resistance, where maximum open interest is concentrated.
+
+
+
+    Example 2:
+
+    Data: PCR=1.3, Max Call=25000, Max Put=24800
+
+    Insight: Market sentiment is currently bearish, with significant put open interest. Expect the price to face strong resistance at 25,000, with a support base forming around 24,800.
+
+
+
+    Now, analyze the following data and provide only the 2-sentence insight:
+
     """
     
     # --- Fallback logic in case AI fails ---
-    def get_fallback_insight(pcr_val):
-        if pcr_val > 1.0:
-            return "Bearish sentiment detected based on high Put-Call Ratio."
-        elif pcr_val < 0.7:
-            return "Bullish sentiment detected based on low Put-Call Ratio."
-        else:
-            return "Neutral sentiment detected based on Put-Call Ratio."
+    def get_fallback_insight():
+        pcr_text = "neutral"
+        if pcr > 1.0: pcr_text = "bearish"
+        if pcr < 0.7: pcr_text = "bullish"
+        
+        return (
+            f"Overall market sentiment appears {pcr_text} (PCR: {pcr}). "
+            f"Watch for strong resistance at the {max_oi_call} strike and support at the {max_oi_put} strike."
+        )
     # ------------------------------------
+
+
 
     if not model:
         logging.warning("Gemini model not available. Using fallback logic.")
-        return get_fallback_insight(pcr)
+        return get_fallback_insight()
+
 
     try:
         response = model.generate_content(prompt)
-        return response.text.strip().replace("\"", "")
+        return response.text.strip().replace("\"", "").replace("*", "")
     except Exception as e:
         logging.error(f"Gemini API error: {e}. Using fallback logic.")
-        return get_fallback_insight(pcr)
-
+        return get_fallback_insight()

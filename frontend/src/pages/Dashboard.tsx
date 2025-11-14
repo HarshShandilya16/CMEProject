@@ -1,109 +1,85 @@
-// src/pages/Dashboard.tsx
+// frontend/src/pages/Dashboard.tsx
 import React from 'react';
-import PriceChart from '../components/charts/PriceChart';
-import { MarketSentimentWidget } from '../components/widgets/MarketSentimentWidget';
-import { useAppStore } from '../store/useAppStore';
+import { useAppStore } from '../store/useAppStore'; // Adjust path if needed
+import PriceChart from '../components/charts/PriceChart'; // Adjust path
+import { MarketSentimentWidget } from '../components/widgets/MarketSentimentWidget'; // Adjust path
+import { MaxPainWidget } from '../components/widgets/MaxPainWidget'; // Adjust path
+import { IVvsRVWidget } from '../components/widgets/IVvsRVWidget'; // Adjust path
+import { OpenInterestWidget } from '../components/widgets/OpenInterestWidget'; // Adjust path
+import { AnimatedWidget } from '../components/animation/AnimatedWidget'; // Our new animator
 
-export const Dashboard: React.FC = () => {
-  const currentSymbol = useAppStore((state) => state.currentSymbol);
-  const theme = useAppStore((state) => state.theme);
+// Helper to get the theme
+const getThemeClasses = (theme: 'light' | 'dark') => {
+  return {
+    bg: theme === 'dark' ? 'bg-gray-900' : 'bg-gray-100', // Main background
+    textPrimary: theme === 'dark' ? 'text-white' : 'text-gray-900',
+  };
+};
 
-  const cardClass = `${
-    theme === 'dark'
-      ? 'bg-gray-800 border border-gray-700'
-      : 'bg-white'
-  } rounded-xl shadow-lg p-6 transition-all hover:shadow-xl`;
+const Dashboard: React.FC = () => {
+  const { currentSymbol, theme } = useAppStore();
+  const classes = getThemeClasses(theme);
 
-  const headingClass = `text-xl font-semibold mb-4 ${
-    theme === 'dark' ? 'text-white' : 'text-gray-800'
-  }`;
-
-  const textClass = theme === 'dark' ? 'text-gray-300' : 'text-gray-600';
+  const cardClass = theme === 'dark' 
+    ? 'bg-gray-800 border border-gray-700' 
+    : 'bg-white border border-gray-200';
 
   return (
-    <div className="grid grid-cols-12 gap-6 p-6">
-      {/* Main Price Chart - Large Block */}
-      <div className={`col-span-12 lg:col-span-8 ${cardClass}`}>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
-            {currentSymbol} Price Chart
-          </h2>
-          <span className={`text-sm ${textClass}`}>Last 30 Days</span>
-        </div>
-        <PriceChart />
-      </div>
+    <div className={`w-full min-h-screen p-4 md:p-6 ${classes.bg}`}>
+      
+      {/* Header: "NIFTY Dashboard" or "BANKNIFTY Dashboard" */}
+      <AnimatedWidget delay={0}>
+        <h1 className={`text-3xl font-bold mb-6 ${classes.textPrimary}`}>
+          {currentSymbol} Dashboard
+        </h1>
+      </AnimatedWidget>
+      
+      {/* This is the CSS Grid for your layout.
+        - It's a 12-column grid.
+        - On small screens (mobile), widgets stack (grid-cols-1).
+        - On large screens (lg), we use all 12 columns.
+      */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-      {/* Market Sentiment Widget */}
-      <div className="col-span-12 lg:col-span-4">
-        <MarketSentimentWidget />
-      </div>
-
-      {/* IV vs RV Widget */}
-      <div className={`col-span-12 lg:col-span-4 ${cardClass}`}>
-        <h3 className={headingClass}>IV vs RV Spread</h3>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <span className={textClass}>Implied Volatility</span>
-            <span className="text-xl font-bold text-purple-500">18.5%</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className={textClass}>Realized Volatility</span>
-            <span className="text-xl font-bold text-green-500">16.2%</span>
-          </div>
-          <div className={`flex items-center justify-between pt-2 border-t ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
-            <span className={`${textClass} font-semibold`}>Spread</span>
-            <span className="text-xl font-bold text-orange-500">+2.3%</span>
-          </div>
-          <div className={`text-sm ${textClass}`}>
-            Options are trading at a premium to realized volatility
-          </div>
+        {/* --- Main Chart (Spans 8 columns) --- */}
+        <div className="lg:col-span-8">
+          <AnimatedWidget delay={0.1}>
+            <div className={`${cardClass} rounded-xl shadow-lg p-6 h-full`}>
+              <PriceChart />
+            </div>
+          </AnimatedWidget>
         </div>
-      </div>
 
-      {/* Max Pain Widget */}
-      <div className={`col-span-12 lg:col-span-4 ${cardClass}`}>
-        <h3 className={headingClass}>Max Pain</h3>
-        <div className="space-y-4">
-          <div className="text-center">
-            <div className="text-4xl font-bold bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent">19,500</div>
-            <div className={`text-sm ${textClass} mt-2`}>Strike Price</div>
-          </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className={textClass}>Current Price</span>
-            <span className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>19,500</span>
-          </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className={textClass}>Distance</span>
-            <span className="font-semibold text-green-500">0 pts</span>
-          </div>
-          <div className={`text-sm ${textClass}`}>
-            Price is currently at max pain level
-          </div>
+        {/* --- Sentiment (Spans 4 columns) --- */}
+        <div className="lg:col-span-4">
+          <AnimatedWidget delay={0.2}>
+            <MarketSentimentWidget />
+          </AnimatedWidget>
         </div>
-      </div>
 
-      {/* Open Interest Widget */}
-      <div className={`col-span-12 lg:col-span-4 ${cardClass}`}>
-        <h3 className={headingClass}>Open Interest</h3>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <span className={textClass}>Total Call OI</span>
-            <span className="text-lg font-bold text-green-500">1.2M</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className={textClass}>Total Put OI</span>
-            <span className="text-lg font-bold text-red-500">1.5M</span>
-          </div>
-          <div className={`w-full ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'} rounded-full h-4 flex overflow-hidden`}>
-            <div className="bg-green-500 h-4 transition-all" style={{ width: '44.4%' }} />
-            <div className="bg-red-500 h-4 transition-all" style={{ width: '55.6%' }} />
-          </div>
-          <div className={`text-sm ${textClass} text-center`}>
-            Put dominance: 55.6%
-          </div>
+        {/* --- Small Widgets (Spans 3, 3, and 6 columns) --- */}
+        
+        <div className="lg:col-span-3">
+          <AnimatedWidget delay={0.3}>
+            <MaxPainWidget />
+          </AnimatedWidget>
         </div>
+
+        <div className="lg:col-span-3">
+          <AnimatedWidget delay={0.4}>
+            <IVvsRVWidget />
+          </AnimatedWidget>
+        </div>
+
+        <div className="lg:col-span-6">
+          <AnimatedWidget delay={0.5}>
+            <OpenInterestWidget />
+          </AnimatedWidget>
+        </div>
+
       </div>
     </div>
   );
 };
 
+export default Dashboard;

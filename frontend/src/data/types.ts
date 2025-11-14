@@ -8,6 +8,7 @@ export interface OptionLeg {
   iv: number;
   oi: number;
   volume: number;
+  oi_change: number;
   delta: number;
   gamma: number;
   theta: number;

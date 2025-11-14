@@ -6,7 +6,9 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from database import get_db, engine
 from models import OptionData, StockData, Base
 from services.ingestion import fetch_and_store
-from services.ai_analyzer import calculate_pcr, get_market_sentiment_insight
+from services.ai_analyzer import get_market_sentiment_insight
+from services.analysis_service import calculate_key_levels
+from services.financial_calcs import calculate_max_pain, get_realized_volatility, get_implied_volatility
 import logging
 import os
 from dotenv import load_dotenv
@@ -88,7 +90,20 @@ class HistoricalResponse(BaseModel):
 class SentimentResponse(BaseModel):
     symbol: str
     pcr: float
-    insight: str
+    detailed_insight: str
+
+
+class OpenInterestResponse(BaseModel):
+    symbol: str
+    total_call_oi: int
+    total_put_oi: int
+
+
+class VolatilitySpreadResponse(BaseModel):
+    symbol: str
+    implied_volatility: float
+    realized_volatility: float
+    spread: float
 
 
 # --- API Endpoints ---
@@ -127,6 +142,7 @@ def get_option_chain(symbol: str, db: Session = Depends(get_db)):
             "expiryDate": option_legs[0].expiry_date.isoformat(),  # Assume all have same expiry for this pull
             "legs": [
                 {
+                    "oi_change": leg.oi_change,
                     "strike": leg.strike_price,
                     "type": leg.option_type,
                     "lastPrice": leg.last_price,
@@ -194,25 +210,101 @@ def get_market_sentiment(symbol: str, db: Session = Depends(get_db)):
     """
     try:
         symbol = symbol.upper()
-        
-        # 1. Calculate PCR from our database
-        pcr = calculate_pcr(db, symbol)
-        
+
+        # 1. Calculate all key levels from our new service
+        levels = calculate_key_levels(db, symbol)
+
         # 2. Get AI insight
-        insight = get_market_sentiment_insight(symbol, pcr)
-        
+        insight = get_market_sentiment_insight(
+            symbol, 
+            levels["pcr"], 
+            levels["max_oi_call_strike"], 
+            levels["max_oi_put_strike"]
+        )
+
         return SentimentResponse(
             symbol=symbol,
-            pcr=pcr,
-            insight=insight
+            pcr=levels["pcr"],
+            detailed_insight=insight
         )
     except Exception as e:
         logging.error(f"Error in sentiment endpoint: {e}")
-        # Return a valid response even on error
         return SentimentResponse(
             symbol=symbol,
             pcr=0.0,
-            insight="Error: Could not calculate sentiment."
+            detailed_insight="Error: Could not calculate sentiment."
         )
+
+
+@app.get("/api/v1/max-pain/{symbol}")
+def get_max_pain(symbol: str, db: Session = Depends(get_db)):
+    """
+    Calculates and returns the Max Pain strike price.
+    """
+    try:
+        symbol = symbol.upper()
+        max_pain_strike = calculate_max_pain(db, symbol)
+
+        if max_pain_strike == 0.0:
+             return {"error": "Could not calculate Max Pain, no data."}
+
+        # Also fetch the current price to send to the frontend
+        stock_data = db.query(StockData).filter(StockData.symbol == symbol).first()
+        current_price = stock_data.underlying_value if stock_data else 0.0
+
+        return {
+            "symbol": symbol, 
+            "max_pain_strike": max_pain_strike,
+            "current_price": current_price
+        }
+    except Exception as e:
+        logging.error(f"Error in max-pain endpoint: {e}")
+        return {"error": "Failed to calculate Max Pain."}
+
+
+@app.get("/api/v1/open-interest/{symbol}", response_model=OpenInterestResponse)
+def get_open_interest_summary(symbol: str, db: Session = Depends(get_db)):
+    """
+    Calculates and returns the total Open Interest for Calls and Puts.
+    """
+    try:
+        symbol = symbol.upper()
+        levels = calculate_key_levels(db, symbol) # We re-use our existing function
+
+        return OpenInterestResponse(
+            symbol=symbol,
+            total_call_oi=levels["total_call_oi"],
+            total_put_oi=levels["total_put_oi"]
+        )
+    except Exception as e:
+        logging.error(f"Error in open-interest endpoint: {e}")
+        return OpenInterestResponse(symbol=symbol, total_call_oi=0, total_put_oi=0)
+
+
+@app.get("/api/v1/volatility-spread/{symbol}", response_model=VolatilitySpreadResponse)
+def get_vol_spread(symbol: str, db: Session = Depends(get_db)):
+    """
+    Calculates and returns the IV/RV spread.
+    """
+    try:
+        symbol = symbol.upper()
+
+        # 1. Get IV from our TimescaleDB
+        iv = get_implied_volatility(db, symbol)
+
+        # 2. Get RV from yfinance (this is a live, blocking call)
+        rv = get_realized_volatility(symbol)
+
+        spread = iv - rv
+
+        return VolatilitySpreadResponse(
+            symbol=symbol,
+            implied_volatility=iv,
+            realized_volatility=rv,
+            spread=round(spread, 2)
+        )
+    except Exception as e:
+        logging.error(f"Error in vol-spread endpoint: {e}")
+        return VolatilitySpreadResponse(symbol=symbol, implied_volatility=0, realized_volatility=0, spread=0)
 
 

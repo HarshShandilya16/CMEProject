@@ -1,4 +1,4 @@
-// This is the code for your MarketSentiment widget
+// frontend/src/components/widgets/MarketSentimentWidget.tsx
 import React from 'react';
 import useSWR from 'swr';
 import { useAppStore } from '../../store/useAppStore'; // Adjust path if needed
@@ -8,7 +8,7 @@ import axios from 'axios';
 interface SentimentData {
   symbol: string;
   pcr: number;
-  insight: string;
+  detailed_insight: string; // This is our new AI insight
 }
 
 // Define the fetcher function
@@ -26,26 +26,25 @@ const getThemeClasses = (theme: 'light' | 'dark') => {
     textSecondary: theme === 'dark' ? 'text-gray-400' : 'text-gray-600',
     border: theme === 'dark' ? 'border-gray-700' : 'border-gray-200',
     loadingBg: theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200',
-    loadingText: theme === 'dark' ? 'text-gray-400' : 'text-gray-600',
   };
 };
 
 export const MarketSentimentWidget: React.FC = () => {
-  // 1. LISTEN to the global symbol and theme
   const { currentSymbol, theme } = useAppStore();
   const classes = getThemeClasses(theme);
-
-  // 2. FETCH live data from our new endpoint
   const { data, error } = useSWR(
-    `${API_URL}/sentiment/${currentSymbol}`, // The key is the dynamic URL
-    fetcher, // The function to run
-    { refreshInterval: 60000 } // Re-fetch every 60 seconds
+    `${API_URL}/sentiment/${currentSymbol}`,
+    fetcher,
+    { refreshInterval: 60000 }
   );
+
+  // --- This is the new "Card" styling ---
+  const cardClasses = `${classes.bg} p-6 rounded-xl shadow-lg border ${classes.border} h-full`;
 
   // 3. RENDER the loading/error/success states
   if (error) {
     return (
-      <div className={`${classes.bg} p-6 rounded-xl shadow-md border ${classes.border}`}>
+      <div className={cardClasses}>
         <h3 className={`text-lg font-semibold ${classes.textPrimary}`}>Market Sentiment</h3>
         <p className="text-sm text-red-500 mt-4">Error loading sentiment data.</p>
       </div>
@@ -53,9 +52,9 @@ export const MarketSentimentWidget: React.FC = () => {
   }
 
   if (!data) {
-    // This is a "skeleton" loading state to match your UI
+    // This is a "skeleton" loading state
     return (
-      <div className={`${classes.bg} p-6 rounded-xl shadow-md border ${classes.border}`}>
+      <div className={cardClasses}>
         <h3 className={`text-lg font-semibold ${classes.textPrimary}`}>Market Sentiment</h3>
         <div className="animate-pulse mt-4">
           <div className="flex justify-between mb-1">
@@ -64,19 +63,18 @@ export const MarketSentimentWidget: React.FC = () => {
           </div>
           <div className={`w-full ${classes.loadingBg} rounded-full h-2.5`}></div>
           <div className={`h-3 ${classes.loadingBg} rounded w-5/6 mt-3`}></div>
+          <div className={`h-3 ${classes.loadingBg} rounded w-full mt-2`}></div>
         </div>
       </div>
     );
   }
 
   // --- Success State ---
-  // Simple logic for the progress bar
-  const pcrPercent = Math.min(data.pcr / 2, 1) * 100; // Cap at PCR 2.0
+  const pcrPercent = Math.min(data.pcr / 2, 1) * 100;
 
   return (
-    <div className={`${classes.bg} p-6 rounded-xl shadow-md border ${classes.border}`}>
+    <div className={cardClasses}>
       <h3 className={`text-lg font-semibold ${classes.textPrimary}`}>Market Sentiment</h3>
-      
       <div className="my-4">
         <div className="flex justify-between mb-1">
           <span className={`text-sm font-medium ${classes.textPrimary}`}>PCR Ratio</span>
@@ -90,10 +88,12 @@ export const MarketSentimentWidget: React.FC = () => {
         </div>
       </div>
       
-      <p className={`text-sm ${classes.textSecondary}`}>
-        {data.insight}
+      {/* THIS IS THE FIX for the overflowing text.
+        We add 'break-words' to allow the AI insight to wrap.
+      */}
+      <p className={`text-sm ${classes.textSecondary} break-words`}>
+        {data.detailed_insight}
       </p>
     </div>
   );
 };
-
