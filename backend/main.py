@@ -16,6 +16,7 @@ import threading  # <--- IMPORT THIS
 import yfinance as yf
 from pydantic import BaseModel
 from typing import List
+from services.news_service import fetch_news
 
 # Load .env variables
 load_dotenv()
@@ -30,7 +31,8 @@ origins = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:3000
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=[o.strip() for o in origins if o.strip()],
+    allow_origin_regex=r"^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -104,6 +106,20 @@ class VolatilitySpreadResponse(BaseModel):
     implied_volatility: float
     realized_volatility: float
     spread: float
+
+
+class NewsArticle(BaseModel):
+    title: str | None = None
+    description: str | None = None
+    url: str | None = None
+    source: str | None = None
+    publishedAt: str | None = None
+    urlToImage: str | None = None
+
+
+class NewsResponse(BaseModel):
+    symbol: str
+    articles: List[NewsArticle]
 
 
 # --- API Endpoints ---
@@ -308,3 +324,16 @@ def get_vol_spread(symbol: str, db: Session = Depends(get_db)):
         return VolatilitySpreadResponse(symbol=symbol, implied_volatility=0, realized_volatility=0, spread=0)
 
 
+
+@app.get("/api/v1/news/{symbol}", response_model=NewsResponse)
+def get_symbol_news(symbol: str, q: str | None = None, page_size: int = 10):
+    """
+    Returns curated news for the given underlying symbol. Optional extra query via 'q'.
+    """
+    try:
+        symbol = symbol.upper()
+        articles = fetch_news(symbol, extra_query=q, page_size=page_size)
+        return NewsResponse(symbol=symbol, articles=articles)
+    except Exception as e:
+        logging.error(f"Error in news endpoint: {e}")
+        return NewsResponse(symbol=symbol.upper(), articles=[])

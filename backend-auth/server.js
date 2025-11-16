@@ -26,7 +26,7 @@ app.use(
   })
 );
 
-const PORT = process.env.PORT || 3001;
+const BASE_PORT = Number(process.env.PORT) || 3001;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/optionspro';
 
 mongoose
@@ -51,4 +51,23 @@ app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/auth/google', googleRoutes);
 
-app.listen(PORT, () => console.log(`Auth server listening on ${PORT}`));
+const MAX_ATTEMPTS = 10;
+
+function startServer(port = BASE_PORT, attempt = 1) {
+  const server = app.listen(port, () => {
+    console.log(`Backend Auth Service Running on PORT: ${port}`);
+  });
+
+  server.on('error', (err) => {
+    if (err && err.code === 'EADDRINUSE' && attempt <= MAX_ATTEMPTS - 1) {
+      const nextPort = port + 1;
+      console.warn(`Port ${port} in use. Retrying on ${nextPort} (attempt ${attempt}/${MAX_ATTEMPTS})...`);
+      setTimeout(() => startServer(nextPort, attempt + 1), 300);
+    } else {
+      console.error(err);
+      process.exit(1);
+    }
+  });
+}
+
+startServer();
