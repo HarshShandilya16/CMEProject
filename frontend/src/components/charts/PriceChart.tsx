@@ -44,12 +44,12 @@ const PriceChart: React.FC = () => {
     };
 
     fetchChartData();
-  }, [currentSymbol]); // Re-fetches when the symbol changes
+  }, [currentSymbol]); // Re-fetch when symbol changes
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
-      // Use the first price in the current data as the baseline
+      
       const firstPrice = chartData[0]?.price || data.price;
       const change = data.price - firstPrice;
       const changePercent = ((change / firstPrice) * 100).toFixed(2);

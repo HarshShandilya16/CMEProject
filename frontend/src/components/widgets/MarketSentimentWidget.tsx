@@ -1,24 +1,24 @@
 // frontend/src/components/widgets/MarketSentimentWidget.tsx
 import React from 'react';
 import useSWR from 'swr';
-import { useAppStore } from '../../store/useAppStore'; // Adjust path if needed
+import { useAppStore } from '../../store/useAppStore'; 
 import axios from 'axios';
 
 // Define the shape of the API response
 interface SentimentData {
   symbol: string;
   pcr: number;
-  detailed_insight: string; // This is our new AI insight
+  detailed_insight: string; 
 }
 
-// Define the fetcher function
+// Define function
 const API_URL = 'http://127.0.0.1:8000/api/v1';
 const fetcher = async (url: string): Promise<SentimentData> => {
   const res = await axios.get(url);
   return res.data;
 };
 
-// Helper to get the theme
+// Define theme
 const getThemeClasses = (theme: 'light' | 'dark') => {
   return {
     bg: theme === 'dark' ? 'bg-gray-800' : 'bg-white',
@@ -38,10 +38,10 @@ export const MarketSentimentWidget: React.FC = () => {
     { refreshInterval: 60000 }
   );
 
-  // --- This is the new "Card" styling ---
+  
   const cardClasses = `${classes.bg} p-6 rounded-xl shadow-lg border ${classes.border} h-full`;
 
-  // 3. RENDER the loading/error/success states
+ 
   if (error) {
     return (
       <div className={cardClasses}>
@@ -52,7 +52,7 @@ export const MarketSentimentWidget: React.FC = () => {
   }
 
   if (!data) {
-    // This is a "skeleton" loading state
+    
     return (
       <div className={cardClasses}>
         <h3 className={`text-lg font-semibold ${classes.textPrimary}`}>Market Sentiment</h3>
@@ -69,7 +69,7 @@ export const MarketSentimentWidget: React.FC = () => {
     );
   }
 
-  // --- Success State ---
+  
   const pcrPercent = Math.min(data.pcr / 2, 1) * 100;
 
   return (
@@ -88,9 +88,7 @@ export const MarketSentimentWidget: React.FC = () => {
         </div>
       </div>
       
-      {/* THIS IS THE FIX for the overflowing text.
-        We add 'break-words' to allow the AI insight to wrap.
-      */}
+      {}
       <p className={`text-sm ${classes.textSecondary} break-words`}>
         {data.detailed_insight}
       </p>

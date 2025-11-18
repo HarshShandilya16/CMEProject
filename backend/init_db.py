@@ -1,6 +1,6 @@
 # backend/init_db.py
 from database import engine, Base
-from models import OptionData, StockData  # Make sure both are imported
+from models import OptionData, StockData  
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.sql import text
 import time

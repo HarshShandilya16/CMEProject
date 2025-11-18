@@ -24,7 +24,7 @@ def get_market_sentiment_insight(symbol: str, pcr: float, max_oi_call: float, ma
     based on multiple data points.
     """
     
-    # --- This is our new, much smarter prompt ---
+    
     prompt = f"""
     You are a senior options analyst for an Indian retail trading platform.
     Your goal is to provide a concise, 2-sentence insight based on the data provided.
@@ -74,7 +74,7 @@ def get_market_sentiment_insight(symbol: str, pcr: float, max_oi_call: float, ma
 
     """
     
-    # --- Fallback logic in case AI fails ---
+    # Fallback
     def get_fallback_insight():
         pcr_text = "neutral"
         if pcr > 1.0: pcr_text = "bearish"

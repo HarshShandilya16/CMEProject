@@ -1,6 +1,6 @@
 // src/data/types.ts
 
-/** A single leg of an option (either a Call or a Put) */
+/** A single leg of an option**/
 export interface OptionLeg {
   strike: number;
   type: 'CE' | 'PE';
@@ -19,14 +19,14 @@ export interface OptionLeg {
 export interface OptionChainData {
   symbol: string;
   underlyingPrice: number;
-  timestamp: string; // ISO 8601 string
+  timestamp: string; 
   expiryDate: string; // YYYY-MM-DD
   legs: OptionLeg[];
 }
 
 /** A single point for a time-series chart */
 export interface TimeSeriesPoint {
-  time: number; // UNIX timestamp
+  time: number; 
   value: number;
 }
 

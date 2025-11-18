@@ -81,50 +81,10 @@ export const Sidebar: React.FC = () => {
             onClick={() => setActiveView('analytics')}
             theme={theme}
           />
-          <NavItem
-            icon={<FiPieChart />}
-            label="Portfolio"
-            view="portfolio"
-            active={activeView === 'portfolio'}
-            onClick={() => setActiveView('portfolio')}
-            theme={theme}
-          />
+          
         </ul>
 
-        {/* Portfolio Summary */}
-        {portfolio.length > 0 && (
-          <div
-            onClick={() => setActiveView('portfolio')}
-            className={`mt-6 p-4 rounded-lg cursor-pointer transition-all ${
-              theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-blue-50 hover:bg-blue-100'
-            }`}
-          >
-            <h3
-              className={`text-sm font-semibold ${
-                theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-              } mb-2`}
-            >
-              Active Positions
-            </h3>
-            <div
-              className={`text-2xl font-bold ${
-                theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
-              }`}
-            >
-              {portfolio.length}
-            </div>
-            <p
-              className={`text-xs ${
-                theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
-              } mt-1 flex items-center gap-1`}
-            >
-              Click to view details
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </p>
-          </div>
-        )}
+       
       </div>
     </aside>
   );

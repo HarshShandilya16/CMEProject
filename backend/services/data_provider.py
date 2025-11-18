@@ -27,7 +27,7 @@ class DataProvider:
     
     def __init__(self):
         logger.info("Initializing NSE DataProvider (Playwright/Firefox Mode)...")
-        # We don't do anything in init. The magic happens in the get call.
+        
     
     def get_option_chain(self, symbol: str) -> dict:
         """
@@ -43,24 +43,24 @@ class DataProvider:
         logger.info(f"Launching headless FIREFOX for {symbol}...")
         try:
             with sync_playwright() as p:
-                # --- THIS IS THE ONLY LINE WE CHANGED ---
+                
                 browser = p.firefox.launch(headless=True)
-                # ----------------------------------------
+                
                 context = browser.new_context(extra_http_headers=self.HEADERS)
                 page = context.new_page()
                 
-                # 1. PRIME THE SESSION: Visit the homepage
+                # Visit the homepage and wait there for 60s
                 logger.info(f"Priming session at {self.BASE_URL}")
-                # --- INCREASED TIMEOUT ---
+                
                 page.goto(self.BASE_URL, timeout=60000)
                 
-                # 2. FETCH THE API DATA: Now go to the API URL
+                # 2. We go to the API URL
                 logger.info(f"Fetching option chain for: {symbol} from {api_url}")
-                # --- INCREASED TIMEOUT ---
+                #
                 page.goto(api_url, timeout=60000)
                 
-                # 3. EXTRACT THE JSON
-                content = page.inner_text('pre') # Directly get text from the <pre> tag
+                # 3. Jo html data we get,the data that is present in the pre tag we are converting it to json
+                content = page.inner_text('pre') 
                 data = json.loads(content)
                 
                 browser.close()
@@ -68,7 +68,7 @@ class DataProvider:
                 return data
         except Exception as e:
             logger.error(f"Playwright failed to fetch {symbol}: {e}")
-            # This will show the full JSON error if it's not a JSONDecodeError
+            
             try:
                 logger.error(f"Page content was: {page.content()[:200]}...")
             except:

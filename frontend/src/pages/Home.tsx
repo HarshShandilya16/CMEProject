@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { useAuthStore } from '../store/useAuthStore';
 
-// Helper to get the theme
+
 const getThemeClasses = (theme: 'light' | 'dark') => {
   return {
     bg: theme === 'dark' ? 'bg-gray-900' : 'bg-gray-100',

@@ -6,10 +6,10 @@ from database import Base
 class OptionData(Base):
     __tablename__ = 'option_data'
 
-    # This is the new column we are adding
+    
     oi_change = Column(Integer, default=0)
 
-    # --- All your existing columns ---
+    
     timestamp = Column(DateTime(timezone=True), nullable=False)
     symbol = Column(String, index=True)
     expiry_date = Column(Date)
@@ -24,7 +24,7 @@ class OptionData(Base):
     theta = Column(Float, default=0.0)
     vega = Column(Float, default=0.0)
 
-    # This is our existing primary key
+    
     __table_args__ = (
         PrimaryKeyConstraint('timestamp', 'symbol', 'strike_price', 'option_type', 'expiry_date'),
     )

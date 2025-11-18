@@ -7,7 +7,7 @@ import yfinance as yf
 import numpy as np
 
 
-# --- (Your existing calculate_max_pain function stays here) ---
+# ---Max Pain---
 def calculate_max_pain(db: Session, symbol: str) -> float:
     try:
         options = db.query(OptionData.strike_price, OptionData.oi, OptionData.option_type).filter(
@@ -33,24 +33,24 @@ def calculate_max_pain(db: Session, symbol: str) -> float:
         return 0.0
 
 
-# --- NEW FUNCTION 1: REALIZED VOLATILITY (RV) ---
+# ---REALIZED VOLATILITY ---
 def get_realized_volatility(symbol: str) -> float:
     """
     Fetches 35 days of historical data and calculates
     the annualized 30-day realized volatility.
     """
     try:
-        # 1. Map our symbol to a Yahoo Finance ticker
+        
         if symbol == 'NIFTY':
             ticker_str = '^NSEI'
         elif symbol == 'BANKNIFTY':
             ticker_str = '^NSEBANK'
         elif symbol == 'FINNIFTY':
-            ticker_str = '^NSEBANK' # Use BANKNIFTY as a proxy
+            ticker_str = '^NSEBANK' 
         else:
             return 0.0
 
-        # 2. Fetch 35 days of data (to ensure we have ~30 trading days)
+        
         ticker = yf.Ticker(ticker_str)
         hist = ticker.history(period="35d")
         
@@ -58,12 +58,10 @@ def get_realized_volatility(symbol: str) -> float:
             logging.warning(f"yfinance returned no data for {ticker_str}")
             return 0.0
 
-        # 3. Calculate daily log returns
+        #2.Daily kitna change aa rha uska percentage
         hist['log_return'] = np.log(hist['Close'] / hist['Close'].shift(1))
         
-        # 4. Calculate 30-day rolling standard deviation (volatility)
-        # and annualize it (multiply by sqrt of trading days, 252)
-        # We take the last 30 trading days for the calculation
+        #last 30 days ka standard deviation
         realized_vol = hist['log_return'].tail(30).std() * np.sqrt(252)
         
         return round(realized_vol * 100, 2) # Return as a percentage (e.g., 16.2)
@@ -73,21 +71,21 @@ def get_realized_volatility(symbol: str) -> float:
         return 0.0
 
 
-# --- NEW FUNCTION 2: IMPLIED VOLATILITY (IV) ---
+# ---IMPLIED VOLATILITY---
 def get_implied_volatility(db: Session, symbol: str) -> float:
     """
     Finds the average Implied Volatility from our database.
     (A simple average of all options for this symbol)
     """
     try:
-        # We query the 'iv' column from our OptionData table
+        # IV col we are fetching and then finding the average
         avg_iv = db.query(func.avg(OptionData.iv)).filter(
             OptionData.symbol == symbol,
             OptionData.iv > 0 # Ignore 0 values
         ).scalar()
         
         # IV in our table is a decimal (e.g., 0.185), so multiply by 100
-        return round((avg_iv or 0.0), 2) # Our data is already a %, no * 100
+        return round((avg_iv or 0.0), 2) 
     except Exception as e:
         logging.error(f"Error calculating Implied Volatility: {e}")
         return 0.0

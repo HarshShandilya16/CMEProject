@@ -1,17 +1,17 @@
 // frontend/src/pages/Dashboard.tsx
 import React from 'react';
-import { useAppStore } from '../store/useAppStore'; // Adjust path if needed
-import PriceChart from '../components/charts/PriceChart'; // Adjust path
-import { MarketSentimentWidget } from '../components/widgets/MarketSentimentWidget'; // Adjust path
-import { MaxPainWidget } from '../components/widgets/MaxPainWidget'; // Adjust path
-import { IVvsRVWidget } from '../components/widgets/IVvsRVWidget'; // Adjust path
-import { OpenInterestWidget } from '../components/widgets/OpenInterestWidget'; // Adjust path
-import { AnimatedWidget } from '../components/animation/AnimatedWidget'; // Our new animator
+import { useAppStore } from '../store/useAppStore'; 
+import PriceChart from '../components/charts/PriceChart'; 
+import { MarketSentimentWidget } from '../components/widgets/MarketSentimentWidget'; 
+import { MaxPainWidget } from '../components/widgets/MaxPainWidget'; 
+import { IVvsRVWidget } from '../components/widgets/IVvsRVWidget'; 
+import { OpenInterestWidget } from '../components/widgets/OpenInterestWidget'; 
+import { AnimatedWidget } from '../components/animation/AnimatedWidget'; 
 
-// Helper to get the theme
+
 const getThemeClasses = (theme: 'light' | 'dark') => {
   return {
-    bg: theme === 'dark' ? 'bg-gray-900' : 'bg-gray-100', // Main background
+    bg: theme === 'dark' ? 'bg-gray-900' : 'bg-gray-100', 
     textPrimary: theme === 'dark' ? 'text-white' : 'text-gray-900',
   };
 };
@@ -27,21 +27,17 @@ const Dashboard: React.FC = () => {
   return (
     <div className={`w-full min-h-screen p-4 md:p-6 ${classes.bg}`}>
       
-      {/* Header: "NIFTY Dashboard" or "BANKNIFTY Dashboard" */}
+      {}
       <AnimatedWidget delay={0}>
         <h1 className={`text-3xl font-bold mb-6 ${classes.textPrimary}`}>
           {currentSymbol} Dashboard
         </h1>
       </AnimatedWidget>
       
-      {/* This is the CSS Grid for your layout.
-        - It's a 12-column grid.
-        - On small screens (mobile), widgets stack (grid-cols-1).
-        - On large screens (lg), we use all 12 columns.
-      */}
+      {}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-        {/* --- Main Chart (Spans 8 columns) --- */}
+        {}
         <div className="lg:col-span-8">
           <AnimatedWidget delay={0.1}>
             <div className={`${cardClass} rounded-xl shadow-lg p-6 h-full`}>
@@ -50,14 +46,14 @@ const Dashboard: React.FC = () => {
           </AnimatedWidget>
         </div>
 
-        {/* --- Sentiment (Spans 4 columns) --- */}
+        {}
         <div className="lg:col-span-4">
           <AnimatedWidget delay={0.2}>
             <MarketSentimentWidget />
           </AnimatedWidget>
         </div>
 
-        {/* --- Small Widgets (Spans 3, 3, and 6 columns) --- */}
+        {}
         
         <div className="lg:col-span-3">
           <AnimatedWidget delay={0.3}>

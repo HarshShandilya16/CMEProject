@@ -6,9 +6,10 @@ from services.data_parser import parse_option_chain_data
 from models import StockData, OptionData
 import logging
 
-# Setup basic logging
+# We are setting up the logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+# We are creating a obg of the DataProvider class
 provider = DataProvider()
 
 
@@ -31,7 +32,7 @@ def fetch_and_store(symbol: str):
         
         logging.info(f"Storing {len(options_list)} option records for {symbol}...")
         
-        # --- THIS IS THE NEW, SMARTER LOGIC ---
+        
         existing_stock = db.query(StockData).filter(StockData.symbol == stock_data.symbol).first()
         if existing_stock:
             logging.info(f"Updating existing stock data for {symbol}.")
@@ -40,14 +41,14 @@ def fetch_and_store(symbol: str):
         else:
             logging.info(f"Creating new stock data entry for {symbol}.")
             db.add(stock_data)
-        # --- END OF NEW LOGIC ---
         
-        # This part is still correct: delete all old options, add all new ones
+        
+        #instead of adding the new data we are deleting the old data
         db.query(OptionData).filter(OptionData.symbol == symbol).delete(synchronize_session=False)
         
-        # Add all new fresh data
-        db.add_all(options_list)
         
+        db.add_all(options_list)
+        #Saving the data to the database
         db.commit()
         logging.info(f"Successfully stored data for {symbol}.")
     except Exception as e:

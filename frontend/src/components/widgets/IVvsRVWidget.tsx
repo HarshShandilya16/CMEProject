@@ -12,14 +12,14 @@ interface VolatilityData {
   spread: number;
 }
 
-// Define the fetcher function
+// Define function
 const API_URL = 'http://127.0.0.1:8000/api/v1';
 const fetcher = async (url: string): Promise<VolatilityData> => {
   const res = await axios.get(url);
   return res.data;
 };
 
-// Helper to get the theme
+// Define theme
 const getThemeClasses = (theme: 'light' | 'dark') => {
   return {
     bg: theme === 'dark' ? 'bg-gray-800' : 'bg-white',
@@ -53,7 +53,7 @@ export const IVvsRVWidget: React.FC = () => {
   }
 
   if (!data) {
-    // Skeleton loading state
+    
     return (
       <div className={cardClasses}>
         <h3 className={`text-lg font-semibold ${classes.textPrimary}`}>IV vs RV Spread</h3>
@@ -71,7 +71,7 @@ export const IVvsRVWidget: React.FC = () => {
     <div className={cardClasses}>
       <h3 className={`text-lg font-semibold ${classes.textPrimary}`}>IV vs RV Spread</h3>
       
-      {/* --- THIS IS THE NEW, FIXED LAYOUT --- */}
+      {}
       <div className="flex justify-between items-center mt-4 text-center">
         
         {/* IV */}
@@ -95,7 +95,7 @@ export const IVvsRVWidget: React.FC = () => {
         </div>
 
       </div>
-      {/* --- END OF NEW LAYOUT --- */}
+      {}
 
       <p className={`text-sm ${classes.textSecondary} mt-3 text-center`}>
         Options are trading at a <span className="font-bold">{isExpensive ? 'premium' : 'discount'}</span> to realized volatility.

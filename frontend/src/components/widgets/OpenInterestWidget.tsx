@@ -4,7 +4,7 @@ import useSWR from 'swr';
 import { useAppStore } from '../../store/useAppStore';
 import axios from 'axios';
 
-// Define the shape of the API response
+// Define kr rhe structure of response
 interface OpenInterestData {
   symbol: string;
   total_call_oi: number;
@@ -29,7 +29,7 @@ const getThemeClasses = (theme: 'light' | 'dark') => {
   };
 };
 
-// Formats big numbers like 1,500,000 to "1.5M"
+// used to format big numbers to their short form
 const formatLargeNumber = (num: number) => {
   if (num >= 1_000_000) {
     return (num / 1_000_000).toFixed(1) + 'M';
@@ -48,7 +48,7 @@ export const OpenInterestWidget: React.FC = () => {
   const { data, error } = useSWR(
     `${API_URL}/open-interest/${currentSymbol}`,
     fetcher,
-    { refreshInterval: 60000 } // Refresh every minute
+    { refreshInterval: 60000 } // Refresh in 1 min
   );
 
   const cardClasses = `${classes.bg} p-6 rounded-xl shadow-lg border ${classes.border} h-full`;
@@ -63,7 +63,7 @@ export const OpenInterestWidget: React.FC = () => {
   }
 
   if (!data) {
-    // Skeleton loading state
+    
     return (
       <div className={cardClasses}>
         <h3 className={`text-lg font-semibold ${classes.textPrimary}`}>Open Interest</h3>
@@ -75,7 +75,7 @@ export const OpenInterestWidget: React.FC = () => {
     );
   }
 
-  // --- Success State ---
+  
   const totalOI = data.total_call_oi + data.total_put_oi;
   const callPercent = totalOI > 0 ? (data.total_call_oi / totalOI) * 100 : 50;
   const putPercent = 100 - callPercent;
@@ -84,7 +84,7 @@ export const OpenInterestWidget: React.FC = () => {
     <div className={cardClasses}>
       <h3 className={`text-lg font-semibold ${classes.textPrimary}`}>Open Interest</h3>
       <div className="mt-4">
-        {/* The Visualization Bar */}
+        {}
         <div className="flex w-full h-3 rounded-full overflow-hidden">
           <div 
             className="bg-green-500" 
@@ -98,7 +98,7 @@ export const OpenInterestWidget: React.FC = () => {
           />
         </div>
 
-        {/* The Data Labels */}
+        {}
         <div className="flex justify-between mt-3">
           <div>
             <p className="text-xs text-green-500 uppercase">Total Call OI</p>

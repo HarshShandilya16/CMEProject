@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { Navbar } from './components/layout/Navbar';
 import { Sidebar } from './components/layout/Sidebar';
 import Dashboard from './pages/Dashboard.tsx';
-import { Portfolio } from './pages/Portfolio';
+//import { Portfolio } from './pages/Portfolio';
 import { OptionChainTable } from './components/OptionChainTable';
 import { useAppStore } from './store/useAppStore';
 import  Home  from './pages/Home';
@@ -50,7 +50,7 @@ function App() {
           {activeView === 'dashboard' && <Dashboard />}
           {activeView === 'optionchain' && <OptionChainTable />}
           {activeView === 'analytics' && <Analytics />}
-          {activeView === 'portfolio' && <Portfolio />}
+        
           {activeView === 'signin' && <SignIn />}
           {activeView === 'signup' && <SignUp />}
           {activeView === 'profile' && <Profile />}

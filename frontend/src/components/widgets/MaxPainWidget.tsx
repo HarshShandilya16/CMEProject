@@ -11,14 +11,14 @@ interface MaxPainData {
   current_price: number;
 }
 
-// Define the fetcher function
+// func define
 const API_URL = 'http://127.0.0.1:8000/api/v1';
 const fetcher = async (url: string): Promise<MaxPainData> => {
   const res = await axios.get(url);
   return res.data;
 };
 
-// Helper to get the theme
+// theme determine 
 const getThemeClasses = (theme: 'light' | 'dark') => {
   return {
     bg: theme === 'dark' ? 'bg-gray-800' : 'bg-white',

@@ -1,7 +1,7 @@
 // src/data/mockData.ts
 import type { OptionChainData, VolatilityData, TimeSeriesPoint } from './types';
 
-/** Mock option chain data for NIFTY */
+/** Mock for nifty**/
 export const MOCK_NIFTY_CHAIN: OptionChainData = {
   symbol: 'NIFTY',
   underlyingPrice: 19500,

@@ -10,8 +10,8 @@ interface Props {
 export const AnimatedWidget: React.FC<Props> = ({ children, delay = 0 }) => {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }} // Start invisible and 20px down
-      animate={{ opacity: 1, y: 0 }}  // Animate to visible and original position
+      initial={{ opacity: 0, y: 20 }} 
+      animate={{ opacity: 1, y: 0 }}  
       transition={{ 
         duration: 0.5, 
         delay: delay,
