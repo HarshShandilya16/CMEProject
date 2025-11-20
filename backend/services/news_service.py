@@ -38,18 +38,228 @@ SYMBOL_KEYWORDS = {
     ],
 }
 
+# Optional overrides for common individual instruments, especially BANKNIFTY/FINNIFTY constituents.
+# You can extend this dict over time as needed.
+STOCK_KEYWORDS: dict[str, list[str]] = {
+    # Major bank index names
+    "HDFCBANK": [
+        "HDFC Bank",
+        "HDFC Bank stock",
+        "HDFCBANK",
+        "HDFC Bank share price",
+        "HDFC Bank options",
+    ],
+    "ICICIBANK": [
+        "ICICI Bank",
+        "ICICI Bank stock",
+        "ICICIBANK",
+        "ICICI Bank share price",
+        "ICICI Bank options",
+    ],
+    "AXISBANK": [
+        "Axis Bank",
+        "Axis Bank stock",
+        "AXISBANK",
+        "Axis Bank share price",
+        "Axis Bank options",
+    ],
+    "KOTAKBANK": [
+        "Kotak Mahindra Bank",
+        "Kotak Bank",
+        "KOTAKBANK",
+        "Kotak Mahindra Bank share",
+        "Kotak Bank options",
+    ],
+    "SBIN": [
+        "State Bank of India",
+        "SBI",
+        "SBIN",
+        "SBI share price",
+        "SBI options",
+    ],
+    # Other BANKNIFTY names
+    "BAJAJFINSV": [
+        "Bajaj Finserv",
+        "Bajaj Finserv stock",
+        "BAJAJFINSV",
+        "Bajaj Finserv share price",
+    ],
+    "BAJFINANCE": [
+        "Bajaj Finance",
+        "Bajaj Finance stock",
+        "BAJFINANCE",
+        "Bajaj Finance share price",
+        "Bajaj Finance options",
+    ],
+    "BANDHANBNK": [
+        "Bandhan Bank",
+        "Bandhan Bank stock",
+        "BANDHANBNK",
+        "Bandhan Bank share price",
+    ],
+    "IDFCFIRSTB": [
+        "IDFC First Bank",
+        "IDFC First Bank stock",
+        "IDFCFIRSTB",
+        "IDFC First Bank share price",
+    ],
+    "INDUSINDBK": [
+        "IndusInd Bank",
+        "IndusInd Bank stock",
+        "INDUSINDBK",
+        "IndusInd Bank share price",
+    ],
+    # Example FINNIFTY names (extend as you need)
+    "HDFCLIFE": [
+        "HDFC Life Insurance",
+        "HDFC Life stock",
+        "HDFCLIFE",
+        "HDFC Life share price",
+    ],
+    "ICICIPRULI": [
+        "ICICI Prudential Life",
+        "ICICI Pru Life",
+        "ICICIPRULI",
+        "ICICI Prudential Life Insurance share",
+    ],
+    "SBILIFE": [
+        "SBI Life Insurance",
+        "SBI Life stock",
+        "SBILIFE",
+        "SBI Life share price",
+    ],
+    # NIFTY large-cap names
+    "BHARTIARTL": [
+        "Bharti Airtel",
+        "Bharti Airtel stock",
+        "BHARTIARTL",
+        "Bharti Airtel share price",
+    ],
+    "HCLTECH": [
+        "HCL Technologies",
+        "HCL Tech",
+        "HCLTECH",
+        "HCL Tech share price",
+    ],
+    "HINDUNILVR": [
+        "Hindustan Unilever",
+        "Hindustan Unilever stock",
+        "HINDUNILVR",
+        "HUL share price",
+    ],
+    "INFY": [
+        "Infosys",
+        "Infosys stock",
+        "INFY",
+        "Infosys share price",
+    ],
+    "ITC": [
+        "ITC",
+        "ITC stock",
+        "ITC share price",
+    ],
+    "LT": [
+        "Larsen & Toubro",
+        "L&T",
+        "LT",
+        "L&T share price",
+    ],
+    "M&M": [
+        "Mahindra & Mahindra",
+        "M&M",
+        "M&M share price",
+    ],
+    "MARUTI": [
+        "Maruti Suzuki India",
+        "Maruti Suzuki",
+        "MARUTI",
+        "Maruti Suzuki share price",
+    ],
+    "POWERGRID": [
+        "Power Grid Corporation of India",
+        "Power Grid",
+        "POWERGRID",
+        "Power Grid share price",
+    ],
+    "RELIANCE": [
+        "Reliance Industries",
+        "Reliance Industries stock",
+        "RELIANCE",
+        "Reliance share price",
+    ],
+    "SUNPHARMA": [
+        "Sun Pharmaceutical",
+        "Sun Pharma",
+        "SUNPHARMA",
+        "Sun Pharma share price",
+    ],
+    "TATAMOTORS": [
+        "Tata Motors",
+        "Tata Motors stock",
+        "TATAMOTORS",
+        "Tata Motors share price",
+    ],
+    "TCS": [
+        "Tata Consultancy Services",
+        "TCS",
+        "TCS share price",
+    ],
+    "TITAN": [
+        "Titan Company",
+        "Titan Company stock",
+        "TITAN",
+        "Titan share price",
+    ],
+    "WIPRO": [
+        "Wipro",
+        "Wipro stock",
+        "WIPRO",
+        "Wipro share price",
+    ],
+}
+
 
 def _build_query(symbol: str, extra: str | None = None) -> str:
     symbol = symbol.upper()
-    base_terms = SYMBOL_KEYWORDS.get(
-        symbol,
-        [
+    # 1) Index-level curated terms
+    if symbol in SYMBOL_KEYWORDS:
+        base_terms = SYMBOL_KEYWORDS[symbol][:]
+    # 2) Per-stock curated overrides (common BANKNIFTY/FINNIFTY names)
+    elif symbol in STOCK_KEYWORDS:
+        base_terms = STOCK_KEYWORDS[symbol][:]
+    else:
+        # 3) Generic fallback for any other individual instrument symbol
+        base_terms = [
+            f"{symbol} stock",
+            f"{symbol} share",
+            f"{symbol} price",
             f"{symbol} options",
             f"{symbol} option chain",
-            f"{symbol} derivatives",
-            f"{symbol} volatility",
-        ],
-    )
+            f"{symbol} NSE",
+        ]
+
+        # Try to derive a more human-readable company name for better matches
+        pretty = symbol
+        replacements = {
+            "BANK": " Bank",
+            "FINANCE": " Finance",
+            "FIN": " Fin",
+            "MOTOR": " Motors",
+            "INDIA": " India",
+            "LTD": " Ltd",
+        }
+        for key, val in replacements.items():
+            if key in pretty:
+                pretty = pretty.replace(key, val)
+
+        if pretty != symbol:
+            base_terms.extend([
+                pretty,
+                f"{pretty} stock",
+                f"{pretty} share",
+                f"{pretty} options",
+            ])
+
     if extra:
         base_terms.append(extra)
     # Use OR to broaden results; NewsAPI supports simple query strings
