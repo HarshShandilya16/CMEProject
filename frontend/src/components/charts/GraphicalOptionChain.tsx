@@ -44,6 +44,7 @@ export const GraphicalOptionChain: React.FC = () => {
   const borderColor = isDark ? 'border-gray-700' : 'border-gray-200';
   const textColor = isDark ? '#e5e7eb' : '#374151';
   const gridColor = isDark ? '#374151' : '#e5e5e5';
+  const axisFill = isDark ? '#d1d5db' : '#374151';
 
   // Transform Data
   const chartData = useMemo(() => {
@@ -225,7 +226,7 @@ export const GraphicalOptionChain: React.FC = () => {
 
   return (
     <div className={`p-6 rounded-xl shadow-lg border ${borderColor} ${bgColor} h-full`}>
-      {/* Header */}
+      {/* Header */} 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
         <div>
           <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>
@@ -266,7 +267,7 @@ export const GraphicalOptionChain: React.FC = () => {
       </div>
 
       {/* Chart */}
-      <div className="h-[380px] w-full">
+      <div className="h-[520px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart 
             data={chartData} 
@@ -286,6 +287,14 @@ export const GraphicalOptionChain: React.FC = () => {
               textAnchor="end"
               height={80}
               tickFormatter={(value) => value.toLocaleString()}
+              label={{
+                value: 'Strike Price (₹)',
+                position: 'insideBottom',
+                offset: -12,
+                fill: axisFill,
+                fontSize: 13,
+                fontWeight: 700,
+              }}
             />
             
             {/* Left Axis: Open Interest */}
@@ -295,11 +304,12 @@ export const GraphicalOptionChain: React.FC = () => {
               tickFormatter={(val) => (val / 1000).toFixed(0) + 'K'} 
               tick={{ fontSize: 11, fill: textColor }} 
               label={{ 
-                value: 'Open Interest', 
+                value: 'Open Interest (OI)', 
                 angle: -90, 
                 position: 'insideLeft', 
-                fill: textColor, 
-                fontSize: 10 
+                fill: axisFill, 
+                fontSize: 13,
+                fontWeight: 700
               }}
             />
 
@@ -311,11 +321,12 @@ export const GraphicalOptionChain: React.FC = () => {
               tickFormatter={(val) => (val / 1000).toFixed(0) + 'K'}
               tick={{ fontSize: 11, fill: '#8884d8' }}
               label={{ 
-                value: 'Volume', 
+                value: 'Volume (Contracts)', 
                 angle: 90, 
                 position: 'insideRight', 
                 fill: '#8884d8', 
-                fontSize: 10 
+                fontSize: 13,
+                fontWeight: 700
               }}
             />
 

@@ -86,6 +86,34 @@ export interface HistoricalResponse {
   data: HistoricalPoint[];
 }
 
+export interface SocialBuzzSentiment {
+  positive: number;
+  neutral: number;
+  negative: number;
+}
+
+export interface SocialBuzzTimelinePoint {
+  time: string;
+  count: number;
+}
+
+export interface SocialBuzzPost {
+  source: string;
+  user?: string;
+  text: string;
+  likes: number;
+}
+
+export interface SocialBuzzResponse {
+  symbol: string;
+  buzz_score: number;
+  sources_used: string[];
+  sentiment: SocialBuzzSentiment;
+  timeline: SocialBuzzTimelinePoint[];
+  top_keywords: string[];
+  top_posts: SocialBuzzPost[];
+}
+
 
 export const getNews = async (symbol: string, q?: string, pageSize: number = 8): Promise<NewsResponse> => {
   try {
@@ -134,6 +162,24 @@ export const getHistoricalPrice = async (symbol: string): Promise<HistoricalResp
   } catch (e) {
     console.error('getHistoricalPrice error', e);
     return { symbol, data: [] };
+  }
+};
+
+export const getSocialBuzz = async (symbol: string): Promise<SocialBuzzResponse> => {
+  try {
+    const resp = await axios.get(`${API_URL}/social-buzz/${symbol}`);
+    return resp.data;
+  } catch (e) {
+    console.error('getSocialBuzz error', e);
+    return {
+      symbol,
+      buzz_score: 0,
+      sources_used: [],
+      sentiment: { positive: 0, neutral: 1, negative: 0 },
+      timeline: [],
+      top_keywords: [],
+      top_posts: [],
+    };
   }
 };
 

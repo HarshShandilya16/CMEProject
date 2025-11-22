@@ -10,6 +10,7 @@ from services.ai_analyzer import get_market_sentiment_insight
 from services.analysis_service import calculate_key_levels
 from services.financial_calcs import calculate_max_pain, get_realized_volatility, get_implied_volatility
 from services.news_service import fetch_news
+from services.social.aggregator import get_social_buzz
 import logging
 import os
 from dotenv import load_dotenv
@@ -231,6 +232,30 @@ class NewsResponse(BaseModel):
     symbol: str
     articles: List[NewsArticle]
 
+class SocialBuzzSentiment(BaseModel):
+    positive: float
+    neutral: float
+    negative: float
+
+class SocialBuzzTimelinePoint(BaseModel):
+    time: str
+    count: int
+
+class SocialBuzzPost(BaseModel):
+    source: str
+    user: str | None = None
+    text: str
+    likes: int | None = 0
+
+class SocialBuzzResponse(BaseModel):
+    symbol: str
+    buzz_score: int
+    sources_used: List[str]
+    sentiment: SocialBuzzSentiment
+    timeline: List[SocialBuzzTimelinePoint]
+    top_keywords: List[str]
+    top_posts: List[SocialBuzzPost]
+
 # --- API Endpoints ---
 
 @app.get("/")
@@ -399,3 +424,27 @@ def get_symbol_news(symbol: str, q: str | None = None, page_size: int = 5):
     except Exception as e:
         logging.error(f"Error in news: {e}")
         return NewsResponse(symbol=symbol, articles=[])
+
+@app.get("/api/v1/social-buzz/{symbol}", response_model=SocialBuzzResponse)
+def get_social_buzz_endpoint(symbol: str):
+    """Aggregate social media and trend data into a single buzz payload.
+
+    Twitter (X) data is included only if TWITTER_BEARER_TOKEN is configured;
+    other sources like Stocktwits / Google Trends / Reddit mock always run
+    with graceful fallbacks.
+    """
+    try:
+        symbol = symbol.upper()
+        data = get_social_buzz(symbol)
+        return SocialBuzzResponse(**data)
+    except Exception as e:  # noqa: BLE001
+        logging.error(f"Error in social-buzz: {e}")
+        return SocialBuzzResponse(
+            symbol=symbol.upper(),
+            buzz_score=0,
+            sources_used=[],
+            sentiment=SocialBuzzSentiment(positive=0.0, neutral=1.0, negative=0.0),
+            timeline=[],
+            top_keywords=[],
+            top_posts=[],
+        )

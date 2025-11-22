@@ -10,11 +10,9 @@ import {
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer, 
-  Legend,
-  ReferenceLine
+  Legend
 } from 'recharts';
 
-// Define the data structure
 interface ChartData {
   time: string;
   price: number;
@@ -27,10 +25,10 @@ const PriceChart: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Theme colors
   const isDark = theme === 'dark';
   const textColor = isDark ? '#9ca3af' : '#374151';
   const gridColor = isDark ? '#374151' : '#e5e5e5';
+  const axisFill = isDark ? '#d1d5db' : '#374151';
 
   useEffect(() => {
     console.log('📈 PriceChart: Fetching data for', currentSymbol);
@@ -62,7 +60,6 @@ const PriceChart: React.FC = () => {
     fetchChartData();
   }, [currentSymbol]);
 
-  // Helper to format large volume numbers
   const formatVolume = (num: number) => {
     if (num >= 10000000) return (num / 10000000).toFixed(1) + 'Cr';
     if (num >= 100000) return (num / 100000).toFixed(1) + 'L';
@@ -70,13 +67,11 @@ const PriceChart: React.FC = () => {
     return num.toString();
   };
 
-  // Custom Tooltip
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const priceData = payload.find((p: any) => p.dataKey === 'price');
       const volumeData = payload.find((p: any) => p.dataKey === 'volume');
       
-      // Calculate change from first day
       const firstPrice = chartData[0]?.price || 0;
       const currentPrice = priceData?.value || 0;
       const change = currentPrice - firstPrice;
@@ -112,10 +107,9 @@ const PriceChart: React.FC = () => {
     return null;
   };
 
-  // Loading State
   if (loading) {
     return (
-      <div className="h-[400px] flex items-center justify-center">
+      <div className="h-[480px] flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
           <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -126,10 +120,9 @@ const PriceChart: React.FC = () => {
     );
   }
 
-  // Error State
   if (error) {
     return (
-      <div className="h-[400px] flex items-center justify-center">
+      <div className="h-[480px] flex items-center justify-center">
         <div className="text-center text-red-500">
           <div className="text-3xl mb-2">⚠️</div>
           <p>{error}</p>
@@ -138,10 +131,9 @@ const PriceChart: React.FC = () => {
     );
   }
 
-  // No Data State
   if (chartData.length === 0) {
     return (
-      <div className="h-[400px] flex items-center justify-center">
+      <div className="h-[480px] flex items-center justify-center">
         <div className={`text-center ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
           <div className="text-3xl mb-2">📊</div>
           <p>No chart data available</p>
@@ -150,21 +142,18 @@ const PriceChart: React.FC = () => {
     );
   }
 
-  // Calculate stats
   const latestPrice = chartData[chartData.length - 1]?.price || 0;
   const firstPrice = chartData[0]?.price || 0;
   const priceChange = latestPrice - firstPrice;
   const percentChange = firstPrice ? ((priceChange / firstPrice) * 100).toFixed(2) : '0.00';
   const isPositive = priceChange >= 0;
 
-  // Calculate price domain for better visualization
   const prices = chartData.map(d => d.price);
   const minPrice = Math.min(...prices) * 0.995;
   const maxPrice = Math.max(...prices) * 1.005;
 
   return (
     <div className="h-full">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 mb-4">
         <div>
           <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
@@ -184,14 +173,13 @@ const PriceChart: React.FC = () => {
         </div>
       </div>
 
-      {/* Chart */}
-      <div className="h-[350px] w-full">
+      {/* expanded height */}
+      <div className="h-[480px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart 
             data={chartData} 
             margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
           >
-            {/* Gradient for Price Area */}
             <defs>
               <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
@@ -199,30 +187,37 @@ const PriceChart: React.FC = () => {
               </linearGradient>
             </defs>
             
-            <CartesianGrid 
-              strokeDasharray="3 3" 
-              stroke={gridColor} 
-              vertical={false} 
-            />
-            
+            <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
             <XAxis 
               dataKey="time" 
               stroke={textColor} 
               tick={{ fontSize: 10 }} 
               minTickGap={20}
+              label={{
+                value: 'Time',
+                position: 'insideBottom',
+                offset: -8,
+                fill: axisFill,
+                fontSize: 13,
+                fontWeight: 700,
+              }}
             />
-            
-            {/* LEFT AXIS: PRICE */}
             <YAxis 
               yAxisId="left" 
               domain={[minPrice, maxPrice]} 
               stroke={textColor} 
               tick={{ fontSize: 11 }} 
               tickFormatter={(val) => `₹${val.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`}
-              width={65}
+              width={75}
+              label={{
+                value: 'Price (₹)',
+                angle: -90,
+                position: 'insideLeft',
+                fill: axisFill,
+                fontSize: 13,
+                fontWeight: 700,
+              }}
             />
-            
-            {/* RIGHT AXIS: VOLUME */}
             <YAxis 
               yAxisId="right" 
               orientation="right" 
@@ -230,43 +225,30 @@ const PriceChart: React.FC = () => {
               tick={{ fontSize: 10 }}
               tickFormatter={formatVolume}
               width={50}
+              label={{
+                value: 'Volume (Contracts)',
+                angle: 90,
+                position: 'insideRight',
+                fill: '#82ca9d',
+                fontSize: 13,
+                fontWeight: 700,
+              }}
             />
 
             <Tooltip content={<CustomTooltip />} />
-            
             <Legend 
               wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }}
               iconType="square"
             />
 
-            {/* VOLUME BARS (Right Axis) */}
-            <Bar 
-              yAxisId="right" 
-              dataKey="volume" 
-              name="Volume" 
-              fill={isDark ? "#374151" : "#d1d5db"} 
-              barSize={8}
-              radius={[2, 2, 0, 0]}
-              opacity={0.6}
-            />
-
-            {/* PRICE AREA (Left Axis) */}
-            <Area 
-              yAxisId="left" 
-              type="monotone" 
-              dataKey="price" 
-              name="Price" 
-              stroke="#3b82f6" 
-              fillOpacity={1} 
-              fill="url(#colorPrice)" 
-              strokeWidth={2.5}
-            />
-
+            <Bar yAxisId="right" dataKey="volume" name="Volume" fill={isDark ? "#374151" : "#d1d5db"} barSize={8}
+              radius={[2, 2, 0, 0]} opacity={0.6}/>
+            <Area yAxisId="left" type="monotone" dataKey="price" name="Price" stroke="#3b82f6" 
+              fillOpacity={1} fill="url(#colorPrice)" strokeWidth={2.5}/>
           </ComposedChart>
         </ResponsiveContainer>
       </div>
 
-      {/* Footer Info */}
       <div className={`mt-3 text-xs ${isDark ? 'text-gray-500' : 'text-gray-600'} text-center`}>
         📊 Historical data from yfinance • Volume shown as bars • Hover for details
       </div>
