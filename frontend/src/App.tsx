@@ -1,12 +1,10 @@
 // src/App.tsx
 import { useEffect } from 'react';
 import { Navbar } from './components/layout/Navbar';
-import { Sidebar } from './components/layout/Sidebar';
 import Dashboard from './pages/Dashboard.tsx';
-//import { Portfolio } from './pages/Portfolio';
 import { OptionChainTable } from './components/OptionChainTable';
 import { useAppStore } from './store/useAppStore';
-import  Home  from './pages/Home';
+import Home from './pages/Home';
 import { SignIn } from './pages/SignIn';
 import { SignUp } from './pages/SignUp';
 import { Profile } from './pages/Profile';
@@ -27,35 +25,28 @@ function App() {
 
   return (
     <div
-      className={`h-screen grid grid-rows-[auto_1fr] overflow-hidden ${
+      className={`min-h-screen ${
         theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'
       }`}
     >
       {/* Navbar */}
       <Navbar />
 
-      {/* Main Layout: Sidebar + Content */}
-      <div className="grid grid-cols-[auto_1fr] overflow-hidden">
-        {/* Sidebar */}
-        <Sidebar />
-
-        {/* Main Content Area */}
-        <main
-          className={`${
-            theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'
-          } overflow-y-auto transition-colors`}
-        >
-          {/* Content based on active view */}
-          {activeView === 'home' && <Home />}
-          {activeView === 'dashboard' && <Dashboard />}
-          {activeView === 'optionchain' && <OptionChainTable />}
-          {activeView === 'analytics' && <Analytics />}
-        
-          {activeView === 'signin' && <SignIn />}
-          {activeView === 'signup' && <SignUp />}
-          {activeView === 'profile' && <Profile />}
-        </main>
-      </div>
+      {/* Main Content Area - Full Width */}
+      <main
+        className={`${
+          theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'
+        } transition-colors`}
+      >
+        {/* Content based on active view */}
+        {activeView === 'home' && <Home />}
+        {activeView === 'dashboard' && <Dashboard />}
+        {activeView === 'optionchain' && <OptionChainTable />}
+        {activeView === 'analytics' && <Analytics />}
+        {activeView === 'signin' && <SignIn />}
+        {activeView === 'signup' && <SignUp />}
+        {activeView === 'profile' && <Profile />}
+      </main>
     </div>
   );
 }
