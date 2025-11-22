@@ -197,6 +197,7 @@ def shutdown_event():
 class ChartData(BaseModel):
     time: str
     price: float
+    volume: int
 
 class HistoricalResponse(BaseModel):
     symbol: str
@@ -318,7 +319,8 @@ def get_historical_price(symbol: str):
         for index, row in hist.iterrows():
             chart_data.append(ChartData(
                 time=row['Date'].strftime('%b %d'),
-                price=round(row['Close'], 2)
+                price=round(row['Close'], 2),
+                volume=int(row['Volume'])
             ))
         
         return HistoricalResponse(symbol=symbol, data=chart_data)
