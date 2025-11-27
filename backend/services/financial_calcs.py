@@ -84,7 +84,7 @@ def get_implied_volatility(db: Session, symbol: str) -> float:
             OptionData.iv > 0 # Ignore 0 values
         ).scalar()
         
-        # IV in our table is a decimal (e.g., 0.185), so multiply by 100
+       
         return round((avg_iv or 0.0), 2) 
     except Exception as e:
         logging.error(f"Error calculating Implied Volatility: {e}")

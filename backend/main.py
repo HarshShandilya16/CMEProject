@@ -18,7 +18,8 @@ import threading
 import time
 import yfinance as yf
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional,Literal
+from fastapi import Query
 
 load_dotenv()
 
@@ -194,15 +195,21 @@ def shutdown_event():
     logging.info("🛑 Shutting down scheduler...")
     scheduler.shutdown()
 
+
 # --- Pydantic Models ---
 class ChartData(BaseModel):
     time: str
     price: float
     volume: int
+    open: Optional[float] = None
+    high: Optional[float] = None
+    low: Optional[float] = None
+    close: Optional[float] = None
 
 class HistoricalResponse(BaseModel):
     symbol: str
     data: List[ChartData]
+    period: str  # Add period information
 
 class SentimentResponse(BaseModel):
     symbol: str
@@ -318,40 +325,92 @@ def get_option_chain(symbol: str, db: Session = Depends(get_db)):
         return {"error": "An internal server error occurred."}
 
 @app.get("/api/v1/historical-price/{symbol}", response_model=HistoricalResponse)
-def get_historical_price(symbol: str):
+def get_historical_price(
+    symbol: str,
+    period: Literal["intraday", "10d", "30d"] = Query(default="30d", description="Time period for data")
+):
+    """
+    Fetch historical price data with support for multiple time periods.
+    
+    - **intraday**: Today's data with 15-minute intervals (candlestick data with OHLC)
+    - **10d**: Last 10 days daily data
+    - **30d**: Last 30 days daily data (default)
+    """
     symbol = symbol.upper()
     ticker_str = ""
     
+    # Map symbol to yfinance ticker
     if symbol == 'NIFTY':
         ticker_str = '^NSEI'
     elif symbol == 'BANKNIFTY':
         ticker_str = '^NSEBANK'
     elif symbol == 'FINNIFTY':
-        ticker_str = '^NSEBANK'
+        ticker_str = 'NIFTY_FIN_SERVICE.NS' 
     else:
         ticker_str = f"{symbol}.NS"
     
     try:
         ticker = yf.Ticker(ticker_str)
-        hist = ticker.history(period="30d")
+        
+        # Determine yfinance parameters based on period selection
+        if period == "intraday":
+            hist = ticker.history(period="1d", interval="5m")
+            time_format = '%H:%M'
+            logging.info(f"📊 Fetching intraday data for {symbol} with 15m intervals")
+        elif period == "10d":
+            hist = ticker.history(period="10d", interval="1d")
+            time_format = '%b %d'
+            logging.info(f"📊 Fetching 10-day historical data for {symbol}")
+        else:  # 30d (default)
+            hist = ticker.history(period="30d", interval="1d")
+            time_format = '%b %d'
+            logging.info(f"📊 Fetching 30-day historical data for {symbol}")
         
         if hist.empty:
-            logging.warning(f"No historical data found for {symbol} ({ticker_str})")
-            return {"symbol": symbol, "data": []}
+            logging.warning(f"⚠️ No historical data found for {symbol} ({ticker_str})")
+            return HistoricalResponse(symbol=symbol, data=[], period=period)
         
         hist = hist.reset_index()
         chart_data = []
-        for index, row in hist.iterrows():
-            chart_data.append(ChartData(
-                time=row['Date'].strftime('%b %d'),
-                price=round(row['Close'], 2),
-                volume=int(row['Volume'])
-            ))
         
-        return HistoricalResponse(symbol=symbol, data=chart_data)
+        for index, row in hist.iterrows():
+            try:
+                # Format time based on period type
+                if period == "intraday":
+                    # Intraday data uses 'Datetime' column
+                    time_str = row['Datetime'].strftime(time_format)
+                else:
+                    # Daily data uses 'Date' column
+                    time_str = row['Date'].strftime(time_format)
+                
+                # For intraday, include OHLC data for candlestick charts
+                if period == "intraday":
+                    chart_data.append(ChartData(
+                        time=time_str,
+                        price=round(row['Close'], 2),
+                        volume=int(row['Volume']) if row['Volume'] > 0 else 0,
+                        open=round(row['Open'], 2),
+                        high=round(row['High'], 2),
+                        low=round(row['Low'], 2),
+                        close=round(row['Close'], 2)
+                    ))
+                else:
+                    # For historical periods (10d, 30d), just send close price
+                    chart_data.append(ChartData(
+                        time=time_str,
+                        price=round(row['Close'], 2),
+                        volume=int(row['Volume']) if row['Volume'] > 0 else 0
+                    ))
+            except Exception as row_error:
+                logging.warning(f"Skipping row due to error: {row_error}")
+                continue
+        
+        logging.info(f"✅ Successfully fetched {len(chart_data)} data points for {symbol} ({period})")
+        return HistoricalResponse(symbol=symbol, data=chart_data, period=period)
+        
     except Exception as e:
-        logging.error(f"Error fetching historical data for {symbol}: {e}")
-        return {"symbol": symbol, "data": []}
+        logging.error(f"❌ Error fetching historical data for {symbol}: {e}")
+        return HistoricalResponse(symbol=symbol, data=[], period=period)
 
 @app.get("/api/v1/sentiment/{symbol}", response_model=SentimentResponse)
 def get_market_sentiment(symbol: str, db: Session = Depends(get_db)):

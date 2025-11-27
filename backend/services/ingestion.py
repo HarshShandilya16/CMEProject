@@ -56,4 +56,3 @@ def fetch_and_store(symbol: str):
         db.rollback()
     finally:
         db.close()
-
