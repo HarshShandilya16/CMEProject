@@ -13,6 +13,7 @@ import { OpenInterestWidget } from '../components/widgets/OpenInterestWidget';
 import NewsPanel from '../components/NewsPanel';
 import { GraphicalOptionChain } from '../components/charts/GraphicalOptionChain';
 import { SocialBuzzWidget } from '../components/SocialBuzzWidget';
+import { AlertsWidget } from '../components/widgets/AlertsWidget';
 
 // Import API Services for Analytics
 import {
@@ -306,12 +307,12 @@ const interpretations = useMemo(() => {
     <MaxPainWidget />
   </AnimatedWidget>
   
-  {/* ✅ AI INSIGHTS - ENHANCED */}
+  {/* AI INSIGHTS - ENHANCED */}
 <AnimatedWidget delay={0.6}>
   <div className={`${cardClass} rounded-xl shadow-lg p-4 flex flex-col`}>
     <div className="flex items-center justify-between mb-3">
       <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
-        🤖 AI Insights
+        AI Insights
       </h3>
       <span className={`text-xs px-2 py-1 rounded ${theme === 'dark' ? 'bg-blue-900 text-blue-300' : 'bg-blue-100 text-blue-700'}`}>
         Live
@@ -334,7 +335,7 @@ const interpretations = useMemo(() => {
       {/* 1. Volume Analysis */}
       <div className={`rounded-lg p-2.5 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
         <div className={`text-xs font-semibold mb-1 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
-          💹 Why is volume increasing?
+          Why is volume increasing?
         </div>
         <p className={`text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
           {interpretations.volumeWhy}
@@ -344,7 +345,7 @@ const interpretations = useMemo(() => {
       {/* 2. OI Analysis */}
       <div className={`rounded-lg p-2.5 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
         <div className={`text-xs font-semibold mb-1 ${theme === 'dark' ? 'text-purple-400' : 'text-purple-600'}`}>
-          📊 Why is OI changing?
+          Why is OI changing?
         </div>
         <p className={`text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
           {interpretations.oiWhy}
@@ -354,7 +355,7 @@ const interpretations = useMemo(() => {
       {/* 3. Market Bias */}
       <div className={`rounded-lg p-2.5 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
         <div className={`text-xs font-semibold mb-1 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
-          🎯 Is market becoming bullish/bearish?
+          Is market becoming bullish/bearish?
         </div>
         <p className={`text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
           Based on PCR <span className="font-bold">{interpretations.pcr?.toFixed(2)}</span>, 
@@ -369,7 +370,7 @@ const interpretations = useMemo(() => {
       {/* 4. Support/Resistance Levels */}
       <div className={`rounded-lg p-2.5 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
         <div className={`text-xs font-semibold mb-1 ${theme === 'dark' ? 'text-orange-400' : 'text-orange-600'}`}>
-          🎚️ Where are key support/resistance levels?
+          Where are key support/resistance levels?
         </div>
         <p className={`text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
           {interpretations.supportResistance}
@@ -379,7 +380,7 @@ const interpretations = useMemo(() => {
       {/* 5. IV-RV Spread */}
       <div className={`rounded-lg p-2.5 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
         <div className={`text-xs font-semibold mb-1 ${theme === 'dark' ? 'text-cyan-400' : 'text-cyan-600'}`}>
-          📈 Are options expensive or cheap?
+          Are options expensive or cheap?
         </div>
         <p className={`text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
           {interpretations.volatilitySignal}
@@ -389,7 +390,7 @@ const interpretations = useMemo(() => {
       {/* 6. Institutional Activity */}
       <div className={`rounded-lg p-2.5 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
         <div className={`text-xs font-semibold mb-1 ${theme === 'dark' ? 'text-indigo-400' : 'text-indigo-600'}`}>
-          🏦 Where are institutions positioning?
+          Where are institutions positioning?
         </div>
         <p className={`text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
           {interpretations.institutionalActivity}
@@ -399,7 +400,7 @@ const interpretations = useMemo(() => {
       {/* 7. Momentum Signal */}
       <div className={`rounded-lg p-2.5 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
         <div className={`text-xs font-semibold mb-1 ${theme === 'dark' ? 'text-pink-400' : 'text-pink-600'}`}>
-          🚀 What's the momentum telling us?
+          What's the momentum telling us?
         </div>
         <p className={`text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
           {interpretations.momentumSignal}
@@ -409,7 +410,7 @@ const interpretations = useMemo(() => {
       {/* 8. Trading Action */}
       <div className={`rounded-lg p-2.5 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
         <div className={`text-xs font-semibold mb-1 ${theme === 'dark' ? 'text-yellow-400' : 'text-yellow-600'}`}>
-          ⚡ Where is the trading action?
+          Where is the trading action?
         </div>
         <p className={`text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
           {interpretations.tradingAction}
@@ -689,6 +690,13 @@ const interpretations = useMemo(() => {
         <div className="lg:col-span-6">
           <AnimatedWidget delay={0.9}>
             <SocialBuzzWidget symbol={currentSymbol} />
+          </AnimatedWidget>
+        </div>
+
+        {/* Alerts Widget - Full Width (Compact) */}
+        <div className="lg:col-span-12 mt-4">
+          <AnimatedWidget delay={1.0}>
+            <AlertsWidget />
           </AnimatedWidget>
         </div>
 

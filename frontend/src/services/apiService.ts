@@ -114,6 +114,19 @@ export interface SocialBuzzResponse {
   top_posts: SocialBuzzPost[];
 }
 
+export interface AlertEvent {
+  symbol: string;
+  rule_name: string;
+  severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' | string;
+  message: string;
+  metadata: Record<string, any>;
+}
+
+export interface AlertsResponse {
+  symbol: string;
+  alerts: AlertEvent[];
+}
+
 
 export const getNews = async (symbol: string, q?: string, pageSize: number = 8): Promise<NewsResponse> => {
   try {
@@ -180,6 +193,16 @@ export const getSocialBuzz = async (symbol: string): Promise<SocialBuzzResponse>
       top_keywords: [],
       top_posts: [],
     };
+  }
+};
+
+export const getAlerts = async (symbol: string): Promise<AlertsResponse> => {
+  try {
+    const resp = await axios.get(`${API_URL}/alerts/${symbol}`);
+    return resp.data;
+  } catch (e) {
+    console.error('getAlerts error', e);
+    return { symbol, alerts: [] };
   }
 };
 

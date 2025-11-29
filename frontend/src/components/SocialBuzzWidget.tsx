@@ -65,8 +65,8 @@ export const SocialBuzzWidget: React.FC<Props> = ({ symbol }) => {
   const buzzScore = data?.buzz_score ?? 0;
 
   return (
-    <div className={`${cardBg} rounded-xl shadow-lg p-4 md:p-5 h-full flex flex-col`}>
-      <div className="flex items-center justify-between mb-4">
+    <div className={`${cardBg} rounded-xl shadow-lg p-3 md:p-4 h-full flex flex-col`}>
+      <div className="flex items-center justify-between mb-3">
         <div>
           <h3 className={`text-lg font-semibold ${textPrimary}`}>Social Buzz</h3>
           <p className={`text-xs ${textMuted}`}>

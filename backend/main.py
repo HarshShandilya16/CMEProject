@@ -11,6 +11,7 @@ from services.analysis_service import calculate_key_levels
 from services.financial_calcs import calculate_max_pain, get_realized_volatility, get_implied_volatility
 from services.news_service import fetch_news
 from services.social.aggregator import get_social_buzz
+from services.alert_engine import AlertEngine, AlertSignal
 import logging
 import os
 from dotenv import load_dotenv
@@ -18,7 +19,7 @@ import threading
 import time
 import yfinance as yf
 from pydantic import BaseModel
-from typing import List, Optional,Literal
+from typing import List, Any, Dict, Optional,Literal
 from fastapi import Query
 
 load_dotenv()
@@ -153,6 +154,7 @@ def run_initial_fetch():
 
 # --- Background Scheduler ---
 scheduler = BackgroundScheduler(daemon=True)
+alert_engine = AlertEngine()
 
 # Schedule Indices (Every 1 minute) - Highest Priority
 scheduler.add_job(fetch_and_store, 'interval', seconds=60, args=['NIFTY'], id='job_nifty')
@@ -262,6 +264,17 @@ class SocialBuzzResponse(BaseModel):
     timeline: List[SocialBuzzTimelinePoint]
     top_keywords: List[str]
     top_posts: List[SocialBuzzPost]
+
+class AlertEventModel(BaseModel):
+    symbol: str
+    rule_name: str
+    severity: str
+    message: str
+    metadata: Dict[str, Any]
+
+class AlertsResponse(BaseModel):
+    symbol: str
+    alerts: List[AlertEventModel]
 
 # --- API Endpoints ---
 
@@ -507,3 +520,55 @@ def get_social_buzz_endpoint(symbol: str):
             top_keywords=[],
             top_posts=[],
         )
+
+@app.get("/api/v1/alerts/{symbol}", response_model=AlertsResponse)
+def get_symbol_alerts(symbol: str, db: Session = Depends(get_db)):
+    try:
+        symbol = symbol.upper()
+
+        # Derive core signals from existing services
+        levels = calculate_key_levels(db, symbol)
+        pcr = levels.get("pcr")
+        total_call_oi = levels.get("total_call_oi")
+        total_put_oi = levels.get("total_put_oi")
+
+        iv = get_implied_volatility(db, symbol)
+        rv = get_realized_volatility(symbol)
+
+        social_data = get_social_buzz(symbol)
+        buzz_score = social_data.get("buzz_score")
+        sentiment_data = social_data.get("sentiment", {}) or {}
+        social_sentiment_score = (
+            float(sentiment_data.get("positive", 0.0))
+            - float(sentiment_data.get("negative", 0.0))
+        )
+
+        signal = AlertSignal(
+            symbol=symbol,
+            pcr=pcr,
+            total_call_oi=total_call_oi,
+            total_put_oi=total_put_oi,
+            iv=iv,
+            rv=rv,
+            social_buzz_score=buzz_score,
+            social_sentiment_score=social_sentiment_score,
+        )
+
+        events = alert_engine.evaluate(signal)
+
+        return AlertsResponse(
+            symbol=symbol,
+            alerts=[
+                AlertEventModel(
+                    symbol=e.symbol,
+                    rule_name=e.rule_name,
+                    severity=e.severity,
+                    message=e.message,
+                    metadata=e.metadata,
+                )
+                for e in events
+            ],
+        )
+    except Exception as e:  # noqa: BLE001
+        logging.error(f"Error in alerts endpoint for {symbol}: {e}")
+        return AlertsResponse(symbol=symbol.upper(), alerts=[])
