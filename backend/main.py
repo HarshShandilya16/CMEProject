@@ -223,6 +223,13 @@ class OpenInterestResponse(BaseModel):
     total_call_oi: int
     total_put_oi: int
 
+class CurrentPriceResponse(BaseModel):
+    symbol: str
+    currentPrice: float
+    dayChange: float
+    dayChangePercent: float
+    timestamp: str
+
 class VolatilitySpreadResponse(BaseModel):
     symbol: str
     implied_volatility: float
@@ -572,3 +579,74 @@ def get_symbol_alerts(symbol: str, db: Session = Depends(get_db)):
     except Exception as e:  # noqa: BLE001
         logging.error(f"Error in alerts endpoint for {symbol}: {e}")
         return AlertsResponse(symbol=symbol.upper(), alerts=[])
+
+@app.get("/api/v1/current-price/{symbol}", response_model=CurrentPriceResponse)
+def get_current_price(symbol: str):
+    """
+    Get the current/latest price for a symbol.
+    This ensures consistent price display across all time periods.
+    """
+    symbol = symbol.upper()
+    ticker_str = ""
+    
+    # Map symbol to yfinance ticker
+    if symbol == 'NIFTY':
+        ticker_str = '^NSEI'
+    elif symbol == 'BANKNIFTY':
+        ticker_str = '^NSEBANK'
+    elif symbol == 'FINNIFTY':
+        ticker_str = 'NIFTY_FIN_SERVICE.NS'
+    else:
+        ticker_str = f"{symbol}.NS"
+    
+    try:
+        ticker = yf.Ticker(ticker_str)
+        
+        # Try to get current price from ticker info first
+        info = ticker.info
+        current_price = info.get('currentPrice') or info.get('regularMarketPrice') or info.get('previousClose', 0)
+        
+        # If info doesn't have current price, get from latest history
+        if not current_price or current_price == 0:
+            # Get the most recent daily close
+            hist = ticker.history(period="5d", interval="1d")
+            if not hist.empty:
+                current_price = float(hist['Close'].iloc[-1])
+                
+        # Get day change info
+        hist_daily = ticker.history(period="2d", interval="1d")
+        if not hist_daily.empty and len(hist_daily) >= 2:
+            previous_close = float(hist_daily['Close'].iloc[-2])
+            day_change = current_price - previous_close
+            day_change_percent = (day_change / previous_close * 100) if previous_close else 0
+        else:
+            # Fallback: use today's open vs close
+            hist_today = ticker.history(period="1d", interval="1d")
+            if not hist_today.empty:
+                open_price = float(hist_today['Open'].iloc[0])
+                day_change = current_price - open_price
+                day_change_percent = (day_change / open_price * 100) if open_price else 0
+            else:
+                day_change = 0
+                day_change_percent = 0
+        
+        from datetime import datetime
+        
+        return CurrentPriceResponse(
+            symbol=symbol,
+            currentPrice=round(current_price, 2),
+            dayChange=round(day_change, 2),
+            dayChangePercent=round(day_change_percent, 2),
+            timestamp=datetime.now().isoformat()
+        )
+        
+    except Exception as e:
+        logging.error(f"❌ Error fetching current price for {symbol}: {e}")
+        from datetime import datetime
+        return CurrentPriceResponse(
+            symbol=symbol,
+            currentPrice=0.0,
+            dayChange=0.0,
+            dayChangePercent=0.0,
+            timestamp=datetime.now().isoformat()
+        )

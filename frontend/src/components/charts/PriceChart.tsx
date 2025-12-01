@@ -27,6 +27,14 @@ interface ChartData {
   close?: number;
 }
 
+// 🆕 Add interface for current price data
+interface CurrentPriceData {
+  currentPrice: number;
+  dayChange: number;
+  dayChangePercent: number;
+  timestamp: string;
+}
+
 type Period = 'intraday' | '10d' | '30d';
 
 const PriceChart: React.FC = () => {
@@ -35,6 +43,10 @@ const PriceChart: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('30d');
+  
+  // 🆕 Add state for current price data
+  const [currentPriceData, setCurrentPriceData] = useState<CurrentPriceData | null>(null);
+  const [priceLoading, setPriceLoading] = useState(false);
 
   const isDark = theme === 'dark';
   const textColor = isDark ? '#9ca3af' : '#374151';
@@ -55,6 +67,38 @@ const PriceChart: React.FC = () => {
     volumeUp: 'rgba(14, 203, 129, 0.2)',
     volumeDown: 'rgba(246, 70, 93, 0.2)',
   };
+
+  // 🆕 Fetch current price - separate from chart data
+  useEffect(() => {
+    const fetchCurrentPrice = async () => {
+      setPriceLoading(true);
+      try {
+        const res = await fetch(
+          `http://127.0.0.1:8000/api/v1/current-price/${currentSymbol}`
+        );
+        
+        if (res.ok) {
+          const data = await res.json();
+          setCurrentPriceData(data);
+          console.log('💰 Current price fetched:', data.currentPrice);
+        } else {
+          console.error('Failed to fetch current price');
+        }
+      } catch (err) {
+        console.error('Error fetching current price:', err);
+      } finally {
+        setPriceLoading(false);
+      }
+    };
+
+    // Fetch immediately
+    fetchCurrentPrice();
+    
+    // Set up auto-refresh every 30 seconds
+    const interval = setInterval(fetchCurrentPrice, 30000);
+    
+    return () => clearInterval(interval);
+  }, [currentSymbol]);
 
   useEffect(() => {
     console.log('📈 PriceChart: Fetching data for', currentSymbol, selectedPeriod);
@@ -337,11 +381,18 @@ const PriceChart: React.FC = () => {
     );
   }
 
-  const latestPrice = chartData[chartData.length - 1]?.close || chartData[chartData.length - 1]?.price || 0;
-  const firstPrice = chartData[0]?.close || chartData[0]?.price || 0;
-  const priceChange = latestPrice - firstPrice;
-  const percentChange = firstPrice ? ((priceChange / firstPrice) * 100).toFixed(2) : '0.00';
-  const isPositive = priceChange >= 0;
+  // 🆕 Use currentPriceData if available, otherwise fall back to chart data
+  const displayPrice = currentPriceData?.currentPrice || 
+                       chartData[chartData.length - 1]?.close || 
+                       chartData[chartData.length - 1]?.price || 0;
+  
+  const displayChange = currentPriceData?.dayChange || 
+                       (displayPrice - (chartData[0]?.close || chartData[0]?.price || 0));
+  
+  const displayChangePercent = currentPriceData?.dayChangePercent?.toFixed(2) || 
+                              (chartData[0]?.price ? ((displayChange / chartData[0].price) * 100).toFixed(2) : '0.00');
+  
+  const isPositive = displayChange >= 0;
 
   // Calculate domain for auto-scaling (intraday only)
   const getYDomain = () => {
@@ -353,7 +404,7 @@ const PriceChart: React.FC = () => {
   };
 
   const periodLabels = {
-    intraday: 'Intraday (10m)',
+    intraday: 'Intraday (5m)',  // Updated to match backend
     '10d': 'Last 10 Days',
     '30d': 'Last 30 Days'
   };
@@ -397,14 +448,33 @@ const PriceChart: React.FC = () => {
           </p>
         </div>
         <div className="text-left sm:text-right">
-          <h2 className={`text-2xl font-bold`} 
-               style={{ color: isPositive ? binanceColors.upCandle : binanceColors.downCandle }}>
-            ₹{latestPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-          </h2>
+          {/* 🆕 Updated price display with loading state */}
+          <div className="flex items-center gap-2">
+            <h2 className={`text-2xl font-bold`} 
+                 style={{ color: isPositive ? binanceColors.upCandle : binanceColors.downCandle }}>
+              ₹{displayPrice.toLocaleString('en-IN', { 
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2 
+              })}
+            </h2>
+            {/* 🆕 Live indicator */}
+            {currentPriceData && !priceLoading && (
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+              </span>
+            )}
+          </div>
           <p className={`text-sm`}
              style={{ color: isPositive ? binanceColors.upCandle : binanceColors.downCandle }}>
-            {isPositive ? '▲' : '▼'} {Math.abs(priceChange).toFixed(2)} ({percentChange}%)
+            {isPositive ? '▲' : '▼'} {Math.abs(displayChange).toFixed(2)} ({displayChangePercent}%)
           </p>
+          {/* 🆕 Show when price was last updated */}
+          {currentPriceData && (
+            <p className={`text-xs mt-1 ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>
+              Live • Auto-updates
+            </p>
+          )}
         </div>
       </div>
 
