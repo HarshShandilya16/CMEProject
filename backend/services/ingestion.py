@@ -1,7 +1,7 @@
 # backend/services/ingestion.py
 from sqlalchemy.orm import Session
 from database import SessionLocal
-from services.data_provider import DataProvider
+from services.unified_data_provider import UnifiedDataProvider
 from services.data_parser import parse_option_chain_data
 from models import StockData, OptionData
 import logging
@@ -9,8 +9,8 @@ import logging
 # We are setting up the logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# We are creating a obg of the DataProvider class
-provider = DataProvider()
+# We are creating an instance of the UnifiedDataProvider class
+provider = UnifiedDataProvider()
 
 
 def fetch_and_store(symbol: str):
