@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from apscheduler.schedulers.background import BackgroundScheduler
 from database import get_db, engine
 from models import OptionData, StockData, Base
-from services.ingestion import fetch_and_store
+from services.ingestion import fetch_and_store,provider
 from services.ai_analyzer import get_market_sentiment_insight
 from services.analysis_service import calculate_key_levels
 from services.financial_calcs import calculate_max_pain, get_realized_volatility, get_implied_volatility
@@ -283,6 +283,20 @@ class AlertsResponse(BaseModel):
     symbol: str
     alerts: List[AlertEventModel]
 
+class DataSourceConfig(BaseModel):
+    """Configuration for data source preference"""
+    source: Literal["DHAN", "SCRAPER", "AUTO"]
+
+class DataSourceStatus(BaseModel):
+    """Current data source status"""
+    current_preference: str
+    available_sources: List[str]
+    dhan_status: str
+    scraper_status: str
+
+class DataSourceConfig(BaseModel):
+    preference: str  # User will send "DHAN", "SCRAPER", or "AUTO"
+
 # --- API Endpoints ---
 
 @app.get("/")
@@ -303,6 +317,41 @@ def read_root():
             "tier_2": "Updates every 180s",
             "tier_3": "Updates every 300s"
         }
+    }
+
+@app.get("/api/v1/data-source/status", response_model=DataSourceStatus)
+def get_data_source_status():
+    """Get current data source configuration and status"""
+    from services.ingestion import provider
+    import os
+    
+    # Check Dhan credentials
+    dhan_client_id = os.getenv("DHAN_CLIENT_ID")
+    dhan_access_token = os.getenv("DHAN_ACCESS_TOKEN")
+    
+    is_dhan_demo = (not dhan_client_id or not dhan_access_token) or \
+                   (dhan_client_id.startswith("DEMO") or dhan_access_token.startswith("DEMO"))
+    
+    dhan_status = "DEMO MODE (Mock Data)" if is_dhan_demo else "LIVE (Real Credentials)"
+    
+    return DataSourceStatus(
+        current_preference=provider.get_preference(),
+        available_sources=["DHAN", "SCRAPER", "AUTO"],
+        dhan_status=dhan_status,
+        scraper_status="Available (Playwright)"
+    )
+
+@app.post("/api/v1/data-source/set")
+def set_data_source(config: DataSourceConfig):
+    """Set the preferred data source for option chain fetching"""
+    from services.ingestion import provider
+    
+    provider.set_preference(config.source)
+    
+    return {
+        "status": "success",
+        "message": f"Data source preference set to: {config.source}",
+        "current_preference": provider.get_preference()
     }
 
 @app.get("/api/v1/option-chain/{symbol}")
@@ -650,3 +699,18 @@ def get_current_price(symbol: str):
             dayChangePercent=0.0,
             timestamp=datetime.now().isoformat()
         )
+@app.post("/api/v1/data-source/set")
+def set_data_source(config: DataSourceConfig):
+    """
+    This function acts as the bridge.
+    """
+    # WHERE THE SETTING HAPPENS:
+    # We take the user's input (config.preference)
+    # And we call the method on our shared 'provider' object.
+    
+    provider.set_preference(config.preference) 
+    
+    return {
+        "status": "success", 
+        "message": f"Preference updated to {provider.get_preference()}"
+    }
