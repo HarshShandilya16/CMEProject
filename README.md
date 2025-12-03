@@ -1,126 +1,203 @@
-# Options Pro - AI-Powered Market Intelligence Dashboard
+Options Pro - AI-Powered Market Intelligence Dashboard
+Options Pro is a professional-grade, fault-tolerant market intelligence platform for retail traders. It aggregates real-time data, performs complex financial calculations, and uses Generative AI to detect anomalies and provide actionable insights for the Indian Stock Market (NSE).
 
-**Options Pro** is a professional-grade, real-time market intelligence platform for retail traders. It aggregates data, performs complex financial calculations, and uses Generative AI to provide actionable insights for the Indian Stock Market (NSE).
+🚀 Key Features
+🧠 AI & Intelligence
+AI-Driven Alert System: A background monitoring engine that recognizes unusual spikes in Implied Volatility (IV), PCR Ratios, Open Interest, and Social Buzz to trigger smart trading alerts.
 
-## 🚀 Key Features
+Generative Market Sentiment: Uses Google Gemini 1.5 to analyze raw data and generate human-readable summaries of market conditions.
 
-* **Real-Time Data Pipeline:** Scrapes live option chains via a custom Playwright engine (bypassing bot protection).
-* **AI Market Sentiment:** Uses **Google Gemini AI** to analyze Put-Call Ratios (PCR) and Open Interest to generate human-readable market summaries.
-* **Advanced Analytics:**
-    * **Max Pain:** Real-time calculation of the "Max Pain" strike price.
-    * **IV vs RV Spread:** Compares Implied Volatility vs. Realized Volatility to find cheap/expensive premiums.
-    * **Open Interest Visualization:** In-table bar charts and dynamic OI buildup analysis.
-* **Live Charts:** Interactive TradingView charts and historical data plotting via `yfinance`.
-* **News Aggregation:** Real-time news feed filtered by specific stocks/indices.
-* **Secure Authentication:** Full user login/signup system with profile management.
+Social Media Buzz: Aggregates and analyzes sentiment from social platforms to quantify "Market Noise" and retail sentiment.
 
----
+🛡️ Robust Data Infrastructure
+Unified Data Provider (Fault Tolerant): Implements a smart fallback logic.
 
-## 🏗️ System Architecture (Microservices)
+Primary: Fetches ultra-fast data via DhanHQ API.
 
-This project uses a **Microservice Architecture** comprising three distinct parts:
+Fallback: Automatically switches to a custom Playwright Scraper if the API fails or rate limits are hit.
 
-1.  **`frontend` (React + Vite):** The user interface (Port 5173).
-2.  **`backend` (FastAPI + Python):** The **Data Engine**. Handles scraping, TimescaleDB storage, AI analysis, and financial math (Port 8000).
-3.  **`backend-auth` (Express + Node.js):** The **Auth Service**. Handles user authentication, MongoDB storage, and profile management (Port 3001).
+Admin Controls: Switch data sources on-the-fly via API without restarting the server.
 
----
+Smart Caching: Integrated Redis/In-Memory Caching to reduce latency and API load.
 
-## 🛠️ Setup & Installation Guide
+📊 Visualization & Analytics
+Customizable Price & Volume Charts: Interactive charts with multiple timeframes:
 
-You will need **3 separate terminals** to run the full application.
+Intraday: 5-minute interval granularity.
 
-### Terminal 1: The Data Engine (FastAPI)
+Swing: 10-Day and 30-Day historical views.
 
+Advanced Greeks & Math:
+
+Max Pain: Real-time calculation of the "Max Pain" expiry level.
+
+IV vs RV Spread: Compares Implied vs. Realized Volatility to identify cheap/expensive premiums.
+
+OI Dynamics: In-table bar charts and dynamic OI buildup analysis.
+
+🔐 Security & Access
+API Gateway: Fully secured REST API with x-api-key authentication.
+
+Role-Based Access: Distinct roles for DEMO users, ADMIN controls, and LOCAL development.
+
+User Authentication: Full MERN-stack login/signup system with profile management.
+
+🏗️ System Architecture (Microservices)
+This project uses a Microservice Architecture comprising three distinct parts:
+
+frontend (React + Vite): The user interface (Port 5173).
+
+backend (FastAPI + Python): The Data Engine.
+
+Handles Data Ingestion (DhanHQ + Scraper).
+
+Runs AI Analysis & Alert Engine.
+
+Manages Caching & TimescaleDB storage.
+
+Exposes a secured API (Port 8000).
+
+backend-auth (Express + Node.js): The Auth Service. Handles user authentication, MongoDB storage, and JWT management (Port 3001).
+
+🛠️ Setup & Installation Guide
+You will need 3 separate terminals to run the full application.
+
+Terminal 1: The Data Engine (FastAPI)
 This service fetches and serves market data.
 
-1.  Navigate to the folder:
-    ```bash
-    cd backend
-    ```
-2.  Setup Python Environment:
-    ```bash
-    python -m venv venv
-    .\venv\Scripts\activate   # Windows
-    # source venv/bin/activate # Mac/Linux
-    ```
-3.  Install Dependencies & Browsers:
-    ```bash
-    pip install -r requirements.txt
-    python -m playwright install firefox
-    ```
-4.  **Configure Environment:**
-    * Create a `.env` file.
-    * Add your **Neon (Postgres) URL** as `DATABASE_URL`.
-    * Add your **Google Gemini API Key** as `GEMINI_API_KEY`.
-    * Add your **NewsAPI Key** as `NEWS_API_KEY`.
-5.  Initialize Database (Run once):
-    ```bash
-    python init_db.py
-    ```
-6.  **Start Server:**
-    ```bash
-    uvicorn main:app --reload
-    ```
-    *Running at: http://127.0.0.1:8000*
+Navigate to the folder:
 
----
+Bash
 
-### Terminal 2: The Auth Service (MERN)
+cd backend
+Setup Python Environment:
 
+Bash
+
+python -m venv venv
+.\venv\Scripts\activate   # Windows
+# source venv/bin/activate # Mac/Linux
+Install Dependencies & Browsers:
+
+Bash
+
+pip install -r requirements.txt
+python -m playwright install firefox
+Configure Environment (.env): Create a .env file with the following keys:
+
+Ini, TOML
+
+# Database
+DATABASE_URL=postgresql://user:pass@host/dbname
+
+# AI & News
+GEMINI_API_KEY=your_gemini_key
+NEWS_API_KEY=your_news_key
+
+# Data Sources (DhanHQ - Optional but Recommended)
+DHAN_CLIENT_ID=your_dhan_id
+DHAN_ACCESS_TOKEN=your_dhan_token
+
+# API Security
+DEMO_API_KEY=demo-key-123
+ADMIN_API_KEY=admin-key-456
+ALLOW_LOCAL_UNAUTH=1  # Set to 1 for easy local development
+
+# Caching (Optional)
+REDIS_URL=redis://localhost:6379/0
+Initialize Database (Run once):
+
+Bash
+
+python init_db.py
+Start Server:
+
+Bash
+
+uvicorn main:app --reload
+Running at: http://127.0.0.1:8000
+
+Terminal 2: The Auth Service (MERN)
 This service handles login and signup.
 
-1.  Navigate to the folder:
-    ```bash
-    cd backend-auth
-    ```
-2.  Install Dependencies:
-    ```bash
-    npm install
-    ```
-3.  **Configure Environment:**
-    * Create a `.env` file.
-    * Add your **MongoDB Connection String** as `MONGO_URI`.
-    * Add a secret string as `JWT_SECRET`.
-4.  **Start Server:**
-    ```bash
-    npm start
-    ```
-    *Running at: http://127.0.0.1:3001*
+Navigate to the folder:
 
----
+Bash
 
-### Terminal 3: The Frontend (React)
+cd backend-auth
+Install Dependencies:
 
+Bash
+
+npm install
+Configure Environment:
+
+Create a .env file.
+
+Add MONGO_URI (MongoDB Connection String).
+
+Add JWT_SECRET (Random secret string).
+
+Start Server:
+
+Bash
+
+npm start
+Running at: http://127.0.0.1:3001
+
+Terminal 3: The Frontend (React)
 The user interface that connects to both backends.
 
-1.  Navigate to the folder:
-    ```bash
-    cd frontend
-    ```
-2.  Install Dependencies:
-    ```bash
-    npm install
-    ```
-3.  **Start Frontend:**
-    ```bash
-    npm run dev
-    ```
-    *Running at: http://localhost:5173*
+Navigate to the folder:
 
----
+Bash
 
-## 📂 Tech Stack Summary
+cd frontend
+Install Dependencies:
 
-* **Frontend:** React, TypeScript, Tailwind CSS, Framer Motion, Recharts, Zustand (State Management).
-* **Data Backend:** Python, FastAPI, Playwright (Scraping), SQLAlchemy, Pandas, NumPy, YFinance.
-* **Auth Backend:** Node.js, Express.js, Mongoose, JWT.
-* **Databases:**
-    * **TimescaleDB (Neon):** For high-speed time-series market data.
-    * **MongoDB:** For user profiles and authentication data.
-* **AI:** Google Gemini 1.5 Flash.
+Bash
 
-## 🧪 API Documentation
+npm install
+Start Frontend:
 
-Once the Python backend is running, you can view the full auto-generated documentation at:
-`http://127.0.0.1:8000/docs`
+Bash
+
+npm run dev
+Running at: http://localhost:5173
+
+📂 Tech Stack Summary
+Frontend: React, TypeScript, Tailwind CSS, Framer Motion, Recharts, Zustand (State Management).
+
+Data Backend: Python, FastAPI, SQLAlchemy, Pydantic, Pandas, NumPy, YFinance.
+
+Data Acquisition: DhanHQ API (Primary), Playwright (Fallback Scraper).
+
+Auth Backend: Node.js, Express.js, Mongoose, JWT.
+
+Databases & Cache:
+
+TimescaleDB (Neon): For high-speed time-series market data.
+
+MongoDB: For user profiles.
+
+Redis (Optional): For API response caching.
+
+AI: Google Gemini 1.5 Flash.
+
+🧪 API Documentation & Remote Access
+Local Documentation
+Once the Python backend is running, view the interactive Swagger UI at: http://127.0.0.1:8000/docs
+
+Remote Access (Teammates)
+To allow teammates to access your local API securely:
+
+Run ngrok (see API_DOCUMENTATION.md for details).
+
+Teammates must include the header x-api-key: demo-key-123 in their requests.
+
+Admin Controls
+Admin users can switch data sources dynamically via the API:
+
+Endpoint: POST /api/v1/data-source/set
+
+Payload: {"preference": "SCRAPER"} or {"preference": "DHAN"}
