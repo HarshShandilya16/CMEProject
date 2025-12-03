@@ -1,9 +1,8 @@
-
 # backend/services/simple_cache.py
 """
 Simple caching helper.
 
-- Uses Redis if REDIS_URL is set and redis package is installed.
+- Uses Redis if REDIS_URL is set and `redis` package is installed.
 - Otherwise falls back to an in-memory TTL cache (suitable for dev).
 """
 
@@ -18,7 +17,7 @@ except Exception:
     redis = None  # optional dependency
 
 class SimpleCache:
-    def _init_(self):
+    def __init__(self):
         self.redis_url = os.getenv("REDIS_URL", "").strip() or None
         if self.redis_url and redis:
             try:

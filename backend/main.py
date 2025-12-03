@@ -5,12 +5,8 @@ from sqlalchemy.orm import Session
 from apscheduler.schedulers.background import BackgroundScheduler
 from database import get_db, engine
 from models import OptionData, StockData, Base
-<<<<<<< HEAD
 # MERGED IMPORT: We need both fetch_and_store AND the provider instance
 from services.ingestion import fetch_and_store, provider
-=======
-from services.ingestion import fetch_and_store,provider
->>>>>>> 2ae52c9ec51a05b29fd68e0e8edc60d870cfc520
 from services.ai_analyzer import get_market_sentiment_insight
 from services.analysis_service import calculate_key_levels
 from services.financial_calcs import calculate_max_pain, get_realized_volatility, get_implied_volatility
@@ -242,7 +238,6 @@ class DataSourceStatus(BaseModel):
     preference: str
     current_source_type: str 
 
-<<<<<<< HEAD
 # ------------------------
 # Utility: build option-chain payload from DB (same shape frontend expects)
 # ------------------------
@@ -297,12 +292,6 @@ def _cache_key(*parts):
 # ------------------------
 # API endpoints
 # ------------------------
-=======
-class DataSourceConfig(BaseModel):
-    preference: str  # User will send "DHAN", "SCRAPER", or "AUTO"
-
-# --- API Endpoints ---
->>>>>>> 2ae52c9ec51a05b29fd68e0e8edc60d870cfc520
 
 @app.get("/")
 def read_root():
@@ -591,7 +580,6 @@ def get_current_price(symbol: str, auth = Depends(require_api_key)):
     except Exception as e:
         logging.error(f"Error fetching current price for {s}: {e}")
         from datetime import datetime
-<<<<<<< HEAD
         return CurrentPriceResponse(symbol=s, currentPrice=0.0, dayChange=0.0, dayChangePercent=0.0, timestamp=datetime.now().isoformat())
 
 # --- ADMIN: trigger ingestion for a symbol (protected) ---
@@ -609,27 +597,3 @@ def admin_refresh(symbol: str, background_tasks: BackgroundTasks, auth = Depends
     cache.set(_cache_key("sentiment", sym), None, ttl=1)
     cache.set(_cache_key("volspread", sym), None, ttl=1)
     return {"status": "scheduled", "symbol": sym}
-=======
-        return CurrentPriceResponse(
-            symbol=symbol,
-            currentPrice=0.0,
-            dayChange=0.0,
-            dayChangePercent=0.0,
-            timestamp=datetime.now().isoformat()
-        )
-@app.post("/api/v1/data-source/set")
-def set_data_source(config: DataSourceConfig):
-    """
-    This function acts as the bridge.
-    """
-    # WHERE THE SETTING HAPPENS:
-    # We take the user's input (config.preference)
-    # And we call the method on our shared 'provider' object.
-    
-    provider.set_preference(config.preference) 
-    
-    return {
-        "status": "success", 
-        "message": f"Preference updated to {provider.get_preference()}"
-    }
->>>>>>> 2ae52c9ec51a05b29fd68e0e8edc60d870cfc520
