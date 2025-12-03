@@ -5,8 +5,7 @@ from sqlalchemy.orm import Session
 from apscheduler.schedulers.background import BackgroundScheduler
 from database import get_db, engine
 from models import OptionData, StockData, Base
-# MERGED IMPORT: We need both fetch_and_store AND the provider instance
-from services.ingestion import fetch_and_store, provider
+from services.ingestion import fetch_and_store,provider
 from services.ai_analyzer import get_market_sentiment_insight
 from services.analysis_service import calculate_key_levels
 from services.financial_calcs import calculate_max_pain, get_realized_volatility, get_implied_volatility
@@ -235,63 +234,16 @@ class DataSourceConfig(BaseModel):
     preference: str
 
 class DataSourceStatus(BaseModel):
-    preference: str
-    current_source_type: str 
+    """Current data source status"""
+    current_preference: str
+    available_sources: List[str]
+    dhan_status: str
+    scraper_status: str
 
-# ------------------------
-# Utility: build option-chain payload from DB (same shape frontend expects)
-# ------------------------
-def fetch_option_chain_from_db(symbol: str, db: Session) -> Optional[dict]:
-    """
-    Build the same payload your frontend used to expect:
-    {
-      "symbol": "...",
-      "underlyingPrice": 123.4,
-      "timestamp": "...",
-      "expiryDate": "YYYY-MM-DD",
-      "legs": [ {oi_change, strike, type, lastPrice, iv, oi, volume, delta, gamma, theta, vega}, ... ]
-    }
-    """
-    try:
-        stock_data = db.query(StockData).filter(StockData.symbol == symbol).first()
-        if not stock_data:
-            return None
-        option_legs = db.query(OptionData).filter(OptionData.symbol == symbol).order_by(OptionData.strike_price).all()
-        if not option_legs:
-            return None
-        legs = []
-        for leg in option_legs:
-            legs.append({
-                "oi_change": leg.oi_change,
-                "strike": leg.strike_price,
-                "type": leg.option_type,
-                "lastPrice": leg.last_price,
-                "iv": leg.iv,
-                "oi": leg.oi,
-                "volume": leg.volume,
-                "delta": leg.delta,
-                "gamma": leg.gamma,
-                "theta": leg.theta,
-                "vega": leg.vega
-            })
-        return {
-            "symbol": stock_data.symbol,
-            "underlyingPrice": stock_data.underlying_value,
-            "timestamp": stock_data.timestamp.isoformat(),
-            "expiryDate": option_legs[0].expiry_date.isoformat(),
-            "legs": legs
-        }
-    except Exception as e:
-        logging.error(f"Error assembling chain from DB for {symbol}: {e}")
-        return None
+class DataSourceConfig(BaseModel):
+    preference: str  # User will send "DHAN", "SCRAPER", or "AUTO"
 
-# Helper for cache keys
-def _cache_key(*parts):
-    return "cache:" + ":".join(map(str, parts))
-
-# ------------------------
-# API endpoints
-# ------------------------
+# --- API Endpoints ---
 
 @app.get("/")
 def read_root():
@@ -580,20 +532,25 @@ def get_current_price(symbol: str, auth = Depends(require_api_key)):
     except Exception as e:
         logging.error(f"Error fetching current price for {s}: {e}")
         from datetime import datetime
-        return CurrentPriceResponse(symbol=s, currentPrice=0.0, dayChange=0.0, dayChangePercent=0.0, timestamp=datetime.now().isoformat())
-
-# --- ADMIN: trigger ingestion for a symbol (protected) ---
-@app.post("/api/v1/admin/refresh/{symbol}")
-def admin_refresh(symbol: str, background_tasks: BackgroundTasks, auth = Depends(require_api_key)):
-    # only admin role allowed
-    if auth.get("role") != "admin":
-        raise HTTPException(status_code=403, detail="Admin API key required")
-    sym = symbol.upper()
-    background_tasks.add_task(fetch_and_store, sym)
-    # also clear relevant caches
-    cache.set(_cache_key("optionchain", sym), None, ttl=1)
-    cache.set(_cache_key("maxpain", sym), None, ttl=1)
-    cache.set(_cache_key("openinterest", sym), None, ttl=1)
-    cache.set(_cache_key("sentiment", sym), None, ttl=1)
-    cache.set(_cache_key("volspread", sym), None, ttl=1)
-    return {"status": "scheduled", "symbol": sym}
+        return CurrentPriceResponse(
+            symbol=symbol,
+            currentPrice=0.0,
+            dayChange=0.0,
+            dayChangePercent=0.0,
+            timestamp=datetime.now().isoformat()
+        )
+@app.post("/api/v1/data-source/set")
+def set_data_source(config: DataSourceConfig):
+    """
+    This function acts as the bridge.
+    """
+    # WHERE THE SETTING HAPPENS:
+    # We take the user's input (config.preference)
+    # And we call the method on our shared 'provider' object.
+    
+    provider.set_preference(config.preference) 
+    
+    return {
+        "status": "success", 
+        "message": f"Preference updated to {provider.get_preference()}"
+    }
